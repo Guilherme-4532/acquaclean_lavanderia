@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
-  const scriptURL = "https://script.google.com/macros/s/AKfycbysbledVzM_4ss1iL8ekWU2J8m42Iq0-fHg93Y4SXfSZCOmyGkvZ_DMABBlNeRWYWH5fw/exec";
+  const scriptURL = "https://script.google.com/macros/s/AKfycbwOXMtQmH7C2yLF7ggdDb_8GrWBrJn3387WD1_HROFxuzBLaVS226LtnjIdt_796-Y0Gw/exec";
 
   // -------------------------
   // FORMULÁRIO DE ENTRADAS
