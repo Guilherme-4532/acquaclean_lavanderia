@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Gestão Financeira - Entradas</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 40px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+      margin-bottom: 24px;
+    }
+
+    .logo-canto {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      width: 60px;
+    }
+
+    form label {
+      font-weight: bold;
+      margin-top: 12px;
+    }
+
+    .form-box {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .form-section {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 16px;
+    }
+
+    input,
+    select {
+      width: 100%;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 14px;
+    }
+
+    .itens-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .card-item {
+      background: #f9f9f9;
+      border: 1px solid #ddd;
+      padding: 16px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 14px;
+      align-items: end;
+      position: relative;
+    }
+
+    .card-item button.btn-remove {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: transparent;
+      border: none;
+      font-size: 18px;
+      color: #c0392b;
+      cursor: pointer;
+    }
+
+    .btn-add,
+    .btn-submit,
+    .btn-voltar {
+      margin-top: 20px;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+      font-weight: bold;
+      transition: background 0.3s ease;
+    }
+
+    .btn-add {
+      background-color: #3498db;
+      color: white;
+    }
+
+    .btn-add:hover {
+      background-color: #2980b9;
+    }
+
+    .btn-submit {
+      background-color: #27ae60;
+      color: white;
+      width: 100%;
+    }
+
+    .btn-submit:hover {
+      background-color: #219150;
+    }
+
+    .btn-voltar {
+      display: inline-block;
+      margin-top: 30px;
+      text-decoration: none;
+      color: #555;
+      font-weight: bold;
+      font-size: 14px;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #ddd;
+      margin: 20px 0 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+
+  <div class="container">
+    <h1>Gestão Financeira - Entradas</h1>
+
+    <form id="entrada-form" class="form-box">
+      <div class="form-section">
+        <label for="data">Data:
+          <input type="date" id="data" name="data" required>
+        </label>
+
+        <label for="comanda">Número da Comanda:
+          <input type="text" id="comanda" name="comanda" required>
+        </label>
+
+        <label for="pagamento">Forma de Pagamento:
+          <select id="pagamento" name="Forma_Pagamento" required>
+            <option value="">Selecione</option>
+            <option value="Dinheiro">Dinheiro</option>
+            <option value="Cartão">Cartão</option>
+            <option value="PIX">PIX</option>
+          </select>
+        </label>
+
+      </div>
+
+      <hr>
+      <h3>Itens da Comanda</h3>
+      <div id="itens-container" class="itens-grid"></div>
+
+      <button type="button" class="btn-add" onclick="adicionarItem()">➕ Adicionar Item</button>
+      <button type="submit" class="btn-submit">💾 Salvar Entrada</button>
+    </form>
+
+    <a href="index.html" class="btn-voltar">← Voltar ao Menu Principal</a>
+  </div>
+
+  <script src="js/main.js"></script>
+  <script>
+    const listaItens = [
+      "Avental", "Blazer", "Botina", "Calça social", "Camisa social manga curta",
+      "Camisa social manga longa", "Casaco", "Coberdrom", "Cobertor", "Colcha",
+      "Cortina", "Edredom", "Fronha", "Jaleco", "Jaqueta", "Lençois", "Manta",
+      "Tapete", "Tenis", "Terno", "Touca", "Travesseiro", "Uniforme calça",
+      "Uniforme camisa", "KG"
+    ];
+
+    function adicionarItem() {
+      const container = document.getElementById("itens-container");
+      const div = document.createElement("div");
+      div.className = "card-item";
+      div.innerHTML = `
+        <label>Item:
+          <select class="item-nome" required onchange="atualizarCampos(this)">
+            <option value="">Selecione</option>
+            ${listaItens.map(i => `<option value="${i}">${i}</option>`).join("")}
+          </select>
+        </label>
+        <label class="label-qtd">Quantidade:
+          <input type="number" class="item-quantidade" min="1">
+        </label>
+        <label class="label-peso" style="display:none;">Peso (KG):
+          <input type="number" class="item-peso" step="0.01" min="0">
+        </label>
+        <label>Valor (R$):
+          <input type="number" class="item-valor" step="0.01" min="0" required>
+        </label>
+        <button type="button" class="btn-remove" onclick="removerItem(this)">❌</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function atualizarCampos(select) {
+      const grupo = select.closest(".card-item");
+      grupo.querySelector(".label-qtd").style.display = select.value === "KG" ? "none" : "block";
+      grupo.querySelector(".label-peso").style.display = select.value === "KG" ? "block" : "none";
+    }
+
+    function removerItem(botao) {
+      botao.closest(".card-item").remove();
+    }
+  </script>
+  <footer class="rodape">
+    <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
+  </footer>
+  <script>
+    document.getElementById("ano-atual").textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>

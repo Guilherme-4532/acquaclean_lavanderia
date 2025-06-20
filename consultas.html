@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Consultas e Registros</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+  <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  <div class="container">
+    <h1>Consultas e Registros</h1>
+
+    <!-- Botão Exportar -->
+    <button class="btn-exportar" onclick="window.print()">📄 Exportar PDF</button>
+
+    <!-- Filtros linha 1 -->
+    <div class="filtros-linha1">
+      <label for="filtro-periodo">Período:
+        <select id="filtro-periodo">
+          <option value="todos">Todos</option>
+          <option value="7dias">Últimos 7 dias</option>
+          <option value="mes">Mês atual</option>
+        </select>
+      </label>
+
+      <label for="data-inicio">De:
+        <input type="date" id="data-inicio">
+      </label>
+
+      <label for="data-fim">Até:
+        <input type="date" id="data-fim">
+      </label>
+    </div>
+
+    <!-- Filtros linha 2 -->
+    <div class="filtros-linha2">
+      <label for="filtro-tipo">Tipo:
+        <select id="filtro-tipo">
+          <option value="">Todos</option>
+          <option value="entrada">Entrada</option>
+          <option value="despesa">Despesa</option>
+          <option value="nf">NF</option>
+        </select>
+      </label>
+
+      <label for="filtro-pagamento">Pagamento:
+        <select id="filtro-pagamento">
+          <option value="">Todos</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão">Cartão</option>
+          <option value="Boleto">Boleto</option>
+          <option value="PIX">PIX</option>
+        </select>
+      </label>
+
+      <label for="filtro-item">Item:
+        <select id="filtro-item">
+          <option value="">Todos</option>
+          <option value="Avental">Avental</option>
+          <option value="Blazer">Blazer</option>
+          <option value="Botina">Botina</option>
+          <option value="Calça social">Calça social</option>
+          <option value="Camisa social manga curta">Camisa social manga curta</option>
+          <option value="Camisa social manga longa">Camisa social manga longa</option>
+          <option value="Casaco">Casaco</option>
+          <option value="Coberdrom">Coberdrom</option>
+          <option value="Cobertor">Cobertor</option>
+          <option value="Colcha">Colcha</option>
+          <option value="Cortina">Cortina</option>
+          <option value="Edredom">Edredom</option>
+          <option value="Fronha">Fronha</option>
+          <option value="Jaleco">Jaleco</option>
+          <option value="Jaqueta">Jaqueta</option>
+          <option value="Lençois">Lençois</option>
+          <option value="Manta">Manta</option>
+          <option value="Tapete">Tapete</option>
+          <option value="Tenis">Tenis</option>
+          <option value="Terno">Terno</option>
+          <option value="Touca">Touca</option>
+          <option value="Travesseiro">Travesseiro</option>
+          <option value="Uniforme calça">Uniforme calça</option>
+          <option value="Uniforme camisa">Uniforme camisa</option>
+          <option value="KG">KG</option>
+        </select>
+      </label>
+
+      <label for="filtro-empresa">Empresa:
+        <input type="text" id="filtro-empresa" placeholder="Nome da Empresa">
+      </label>
+
+      <div class="bloco-filtrar">
+        <button class="btn-filtrar" onclick="carregarDados()" title="Filtrar">🔍</button>
+        <button class="btn-filtrar" onclick="limparFiltros()" title="Limpar">♻</button>
+      </div>
+    </div>
+
+    <!-- Tabela -->
+    <table id="tabela" border="1" style="width: 100%; margin-top: 30px;">
+      <thead>
+        <tr>
+          <th>Tipo</th>
+          <th>Data</th>
+          <th>Item</th>
+          <th>Quantidade</th>
+          <th>Peso</th>
+          <th>Valor (R$)</th>
+          <th>Pagamento</th>
+          <th>Empresa</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+      <tfoot>
+        <tr>
+          <td colspan="5" style="text-align: right; font-weight: bold;">Total:</td>
+          <td id="total-geral" style="font-weight: bold;">0.00</td>
+          <td colspan="2"></td>
+        </tr>
+      </tfoot>
+    </table>
+
+    <br>
+    <a href="index.html">← Voltar ao Menu Principal</a>
+  </div>
+
+  <script>
+    async function carregarDados() {
+      const response = await fetch("https://opensheet.elk.sh/1KzywkfY72Rbpy-qJ3SQV2teHH1UEli4v0ip89gfGznQ/Planilha1");
+      const dados = await response.json();
+
+      const filtroPeriodo = document.getElementById("filtro-periodo").value;
+      const inicio = document.getElementById("data-inicio").value;
+      const fim = document.getElementById("data-fim").value;
+      const filtroTipo = document.getElementById("filtro-tipo").value;
+      const filtroPagamento = document.getElementById("filtro-pagamento").value;
+      const filtroItem = document.getElementById("filtro-item").value;
+      const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
+
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+
+      const tbody = document.querySelector("#tabela tbody");
+      const totalGeral = document.getElementById("total-geral");
+      tbody.innerHTML = "";
+      let totalValor = 0;
+
+      dados.forEach(row => {
+        const tipo = row.tipo || "";
+        const dataStr = row.data || "";
+        const itens = row.itens || "";
+        const quantidades = row.quantidades || "";
+        const peso = row.peso || "";
+        const valor = parseFloat(row.valor_total?.replace(",", ".") || 0);
+        const pagamento = row.forma_pagamento || "";
+        const empresa = (row.nome_empresa || "").toLowerCase().trim();
+
+        const [ano, mes, dia] = dataStr.split("-");
+        const dataRegistro = new Date(`${ano}-${mes}-${dia}`);
+
+        if (!inicio && !fim && filtroPeriodo === "7dias") {
+          const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
+          if (diff > 7 || diff < 0) return;
+        } else if (!inicio && !fim && filtroPeriodo === "mes") {
+          if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return;
+        }
+
+        if (inicio && dataRegistro < new Date(inicio)) return;
+        if (fim && dataRegistro > new Date(fim)) return;
+        if (filtroTipo && tipo !== filtroTipo) return;
+        if (filtroPagamento && pagamento !== filtroPagamento) return;
+        if (filtroItem && !itens.includes(filtroItem)) return;
+        if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return;
+
+        totalValor += valor;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${tipo}</td>
+          <td>${dataStr}</td>
+          <td>${itens}</td>
+          <td>${quantidades}</td>
+          <td>${peso}</td>
+          <td>${valor.toFixed(2)}</td>
+          <td>${pagamento}</td>
+          <td>${row.nome_empresa || ""}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      totalGeral.textContent = totalValor.toFixed(2);
+    }
+
+    function limparFiltros() {
+      document.getElementById("filtro-periodo").value = "todos";
+      document.getElementById("data-inicio").value = "";
+      document.getElementById("data-fim").value = "";
+      document.getElementById("filtro-tipo").value = "";
+      document.getElementById("filtro-pagamento").value = "";
+      document.getElementById("filtro-item").value = "";
+      document.getElementById("filtro-empresa").value = "";
+      carregarDados();
+    }
+
+    window.onload = carregarDados;
+  </script>
+  <footer class="rodape">
+    <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
+  </footer>
+
+  <script>
+    document.getElementById("ano-atual").textContent = new Date().getFullYear();
+  </script>
+</body>
+
+</html>
