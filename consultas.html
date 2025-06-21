@@ -161,15 +161,23 @@
         const itens = row.itens || "";
         const quantidades = row.quantidades || "";
         const peso = row.peso || "";
-        const valor = typeof row.valor_total === "string"
-          ? parseFloat(row.valor_total.replace(",", "."))
-          : parseFloat(row.valor_total || 0);
+        let valor = 0;
+        if (typeof row.valor_total === "string") {
+          valor = parseFloat(row.valor_total.replace(",", ".")) || 0;
+        } else {
+          valor = parseFloat(row.valor_total) || 0;
+        }
 
         const pagamento = row.forma_pagamento || "";
         const empresa = (row.nome_empresa || "").toLowerCase().trim();
 
-        const [ano, mes, dia] = dataStr.split("-");
-        const dataRegistro = new Date(`${ano}-${mes}-${dia}`);
+        let dataRegistro = null;
+        if (dataStr && dataStr.includes("-")) {
+          const [ano, mes, dia] = dataStr.split("-");
+          dataRegistro = new Date(`${ano}-${mes}-${dia}`);
+        } else {
+          dataRegistro = new Date("2100-01-01"); // ignora registros mal formatados
+        }
 
         if (!inicio && !fim && filtroPeriodo === "7dias") {
           const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
