@@ -64,10 +64,10 @@ document.addEventListener("DOMContentLoaded", function () {
         quantidades,
         valores,
         peso: pesoTotal,
-        valor_total: valorTotal.toFixed(2)
+        valor_total: parseFloat(valorTotal.toFixed(2))
       };
 
-      const { error } = await supabase.from('Registros').insert([payload]);
+      const { error } = await supabase.from('registros').insert([payload]);
 
       if (error) {
         alert("Erro ao salvar os dados: " + error.message);
@@ -98,7 +98,7 @@ document.addEventListener("DOMContentLoaded", function () {
         forma_pagamento: document.getElementById("pagamento-despesa").value
       };
 
-      const { error } = await supabase.from('Registros').insert([payload]);
+      const { error } = await supabase.from('registros').insert([payload]);
 
       if (error) {
         alert("Erro ao salvar a despesa: " + error.message);
@@ -128,7 +128,7 @@ document.addEventListener("DOMContentLoaded", function () {
         forma_pagamento: document.getElementById("pagamento").value
       };
 
-      const { error } = await supabase.from('Registros').insert([payload]);
+      const { error } = await supabase.from('registros').insert([payload]);
 
       if (error) {
         alert("Erro ao salvar NF: " + error.message);
