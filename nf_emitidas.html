@@ -130,57 +130,50 @@
     <a href="index.html" class="btn-voltar">← Voltar ao Menu Principal</a>
   </div>
 
-  <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const scriptURL = "https://script.google.com/macros/s/AKfycbz2f32MwTESOTMKLkaClBt__fX0NcoftjCmEEnh_tP5z7c1l9OQaAC-pIoLEhRA26c8zw/exec";
+  <script type="module">
+    import { createClient } from "https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm";
+
+    const supabaseUrl = "https://vqfohtlpdhkzcnyupofk.supabase.co";
+    const supabaseKey = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE";
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    document.addEventListener("DOMContentLoaded", () => {
       const nfForm = document.getElementById("nf-form");
 
-      if (nfForm) {
-        nfForm.addEventListener("submit", function (event) {
-          event.preventDefault();
+      nfForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
 
-          const payload = {
-            tipo: "nf",
-            data: document.getElementById("data").value,
-            numero_nf: document.getElementById("numero_nf").value,
-            nome_empresa: document.getElementById("empresa").value,
-            valor_total: document.getElementById("valor").value,
-            forma_pagamento: document.getElementById("pagamento").value
-          };
+        const payload = {
+          tipo: "nf",
+          data: document.getElementById("data").value,
+          numero_nf: document.getElementById("numero_nf").value,
+          nome_empresa: document.getElementById("empresa").value,
+          valor_total: document.getElementById("valor").value,
+          forma_pagamento: document.getElementById("pagamento").value
+        };
 
-          fetch(scriptURL, {
-            method: "POST",
-            body: JSON.stringify(payload),
-            headers: {
-              "Content-Type": "application/json"
-            }
-          })
-            .then(response => response.json())
-            .then(result => {
-              if (result.status === "sucesso") {
-                alert("Nota Fiscal registrada com sucesso!");
-                nfForm.reset();
+        const { error } = await supabase.from("registros").insert([payload]);
 
-                // ✅ Feedback visual com borda verde temporária
-                nfForm.classList.add("sucesso");
-                setTimeout(() => nfForm.classList.remove("sucesso"), 2000);
-              } else {
-                alert("Erro: " + result.mensagem);
-              }
-            })
-            .catch(error => {
-              alert("Erro ao salvar NF: " + error.message);
-            });
-        });
-      }
+        if (error) {
+          alert("Erro ao salvar NF: " + error.message);
+        } else {
+          alert("Nota Fiscal registrada com sucesso!");
+          nfForm.reset();
+          nfForm.classList.add("sucesso");
+          setTimeout(() => nfForm.classList.remove("sucesso"), 2000);
+        }
+      });
     });
   </script>
+
   <footer class="rodape">
     <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
   </footer>
+
   <script>
     document.getElementById("ano-atual").textContent = new Date().getFullYear();
   </script>
-</body>
 
+</body>
 </html>

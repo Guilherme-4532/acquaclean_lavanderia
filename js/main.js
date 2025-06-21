@@ -1,27 +1,31 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const scriptURL = "https://script.google.com/macros/s/AKfycbz2f32MwTESOTMKLkaClBt__fX0NcoftjCmEEnh_tP5z7c1l9OQaAC-pIoLEhRA26c8zw/exec";
+// main.js - Integração com Supabase
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-  // -------------------------
-  // FORMULÁRIO DE ENTRADAS
-  // -------------------------
+const SUPABASE_URL = 'https://vqfohtlpdhkzcnyupofk.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE';
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// --------------------------------
+// FORMULÁRIO DE ENTRADAS
+// --------------------------------
+document.addEventListener("DOMContentLoaded", function () {
   const entradaForm = document.getElementById("entrada-form");
   if (entradaForm) {
-    entradaForm.addEventListener("submit", function (event) {
+    entradaForm.addEventListener("submit", async function (event) {
       event.preventDefault();
 
       const data = document.getElementById("data").value;
       const comanda = document.getElementById("comanda").value;
       const pagamento = document.getElementById("pagamento").value;
-
       const itensDOM = document.querySelectorAll(".card-item");
+
       if (itensDOM.length === 0) {
         alert("Adicione ao menos um item na comanda.");
         return;
       }
 
-      const itens = [];
-      const quantidades = [];
-      const valores = [];
+      const itens = [], quantidades = [], valores = [];
       let pesoTotal = 0;
       let valorTotal = 0;
       let erro = false;
@@ -56,48 +60,33 @@ document.addEventListener("DOMContentLoaded", function () {
         data: data,
         numero_comanda: comanda,
         forma_pagamento: pagamento,
-        itens: itens,
-        quantidades: quantidades,
-        valores: valores,
+        itens,
+        quantidades,
+        valores,
         peso: pesoTotal,
         valor_total: valorTotal.toFixed(2)
       };
 
-      console.log("Enviando entrada:", payload);
+      const { error } = await supabase.from('Registros').insert([payload]);
 
-      fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-        .then(response => response.json())
-        .then(result => {
-          if (result.status === "sucesso") {
-            alert("Entrada salva com sucesso!");
-            entradaForm.reset();
-            document.getElementById("itens-container").innerHTML = "";
-
-            // ✅ Feedback visual com borda verde temporária
-            entradaForm.classList.add("sucesso");
-            setTimeout(() => entradaForm.classList.remove("sucesso"), 2000);
-          } else {
-            alert("Erro: " + result.mensagem);
-          }
-        })
-        .catch(error => {
-          alert("Erro ao salvar os dados: " + error.message);
-        });
+      if (error) {
+        alert("Erro ao salvar os dados: " + error.message);
+      } else {
+        alert("Entrada salva com sucesso!");
+        entradaForm.reset();
+        document.getElementById("itens-container").innerHTML = "";
+        entradaForm.classList.add("sucesso");
+        setTimeout(() => entradaForm.classList.remove("sucesso"), 2000);
+      }
     });
   }
 
-  // -------------------------
+  // --------------------------------
   // FORMULÁRIO DE DESPESAS
-  // -------------------------
+  // --------------------------------
   const despesasForm = document.getElementById("despesas-form");
   if (despesasForm) {
-    despesasForm.addEventListener("submit", function (event) {
+    despesasForm.addEventListener("submit", async function (event) {
       event.preventDefault();
 
       const payload = {
@@ -109,74 +98,46 @@ document.addEventListener("DOMContentLoaded", function () {
         forma_pagamento: document.getElementById("pagamento-despesa").value
       };
 
-      fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-        .then(response => response.json())
-        .then(result => {
-          if (result.status === "sucesso") {
-            alert("Despesa salva com sucesso!");
-            despesasForm.reset();
+      const { error } = await supabase.from('Registros').insert([payload]);
 
-            // Feedback visual com borda verde temporária
-            despesasForm.classList.add("sucesso");
-            setTimeout(() => despesasForm.classList.remove("sucesso"), 2000);
-          } else {
-            alert("Erro: " + result.mensagem);
-          }
-        })
-        .catch(error => {
-          alert("Erro ao salvar a despesa: " + error.message);
-        });
-
+      if (error) {
+        alert("Erro ao salvar a despesa: " + error.message);
+      } else {
+        alert("Despesa salva com sucesso!");
+        despesasForm.reset();
+        despesasForm.classList.add("sucesso");
+        setTimeout(() => despesasForm.classList.remove("sucesso"), 2000);
+      }
     });
   }
 
-  // -------------------------
-  // FORMULÁRIO DE NOTAS FISCAIS
-  // -------------------------
+  // --------------------------------
+  // FORMULÁRIO DE NF
+  // --------------------------------
   const nfForm = document.getElementById("nf-form");
   if (nfForm) {
-    nfForm.addEventListener("submit", function (event) {
+    nfForm.addEventListener("submit", async function (event) {
       event.preventDefault();
 
       const payload = {
         tipo: "nf",
         data: document.getElementById("data").value,
-        numero_nf: document.getElementById("numero-nf").value,  // Corrigido
+        numero_nf: document.getElementById("numero_nf").value,
         nome_empresa: document.getElementById("empresa").value,
         valor_total: document.getElementById("valor").value,
-        forma_pagamento: document.getElementById("pagamento").value  // Corrigido
+        forma_pagamento: document.getElementById("pagamento").value
       };
 
+      const { error } = await supabase.from('Registros').insert([payload]);
 
-      fetch(scriptURL, {
-        method: "POST",
-        body: JSON.stringify(payload),
-        headers: {
-          "Content-Type": "application/json"
-        }
-      })
-        .then(response => response.json())
-        .then(result => {
-          if (result.status === "sucesso") {
-            alert("Nota Fiscal registrada com sucesso!");
-            nfForm.reset();
-
-            // ✅ Feedback visual com borda verde temporária
-            nfForm.classList.add("sucesso");
-            setTimeout(() => nfForm.classList.remove("sucesso"), 2000);
-          } else {
-            alert("Erro: " + result.mensagem);
-          }
-        })
-        .catch(error => {
-          alert("Erro ao salvar NF: " + error.message);
-        });
+      if (error) {
+        alert("Erro ao salvar NF: " + error.message);
+      } else {
+        alert("Nota Fiscal registrada com sucesso!");
+        nfForm.reset();
+        nfForm.classList.add("sucesso");
+        setTimeout(() => nfForm.classList.remove("sucesso"), 2000);
+      }
     });
   }
 });
