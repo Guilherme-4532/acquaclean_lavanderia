@@ -158,54 +158,64 @@
       dados.forEach(row => {
         const tipo = row.tipo || "";
         const dataStr = row.data || "";
-        const itens = row.itens || "";
-        const quantidades = row.quantidades || "";
-        const peso = row.peso || "";
-        let valor = 0;
-        if (typeof row.valor_total === "string") {
-          valor = parseFloat(row.valor_total.replace(",", ".")) || 0;
-        } else {
-          valor = parseFloat(row.valor_total) || 0;
-        }
-
         const pagamento = row.forma_pagamento || "";
         const empresa = (row.nome_empresa || "").toLowerCase().trim();
+
+        let itensArray = [];
+        let quantidadesArray = [];
+
+        try {
+          itensArray = Array.isArray(row.itens) ? row.itens : JSON.parse(row.itens || "[]");
+        } catch (e) {
+          itensArray = [];
+        }
+
+        try {
+          quantidadesArray = Array.isArray(row.quantidades) ? row.quantidades : JSON.parse(row.quantidades || "[]");
+        } catch (e) {
+          quantidadesArray = [];
+        }
+
+        const peso = row.peso || "";
+        const valor = typeof row.valor_total === "string" ? parseFloat(row.valor_total.replace(",", ".")) : parseFloat(row.valor_total) || 0;
 
         let dataRegistro = null;
         if (dataStr && dataStr.includes("-")) {
           const [ano, mes, dia] = dataStr.split("-");
           dataRegistro = new Date(`${ano}-${mes}-${dia}`);
         } else {
-          dataRegistro = new Date("2100-01-01"); // ignora registros mal formatados
+          dataRegistro = new Date("2100-01-01");
         }
 
+        // Filtros de data
         if (!inicio && !fim && filtroPeriodo === "7dias") {
           const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
           if (diff > 7 || diff < 0) return;
         } else if (!inicio && !fim && filtroPeriodo === "mes") {
           if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return;
         }
-
         if (inicio && dataRegistro < new Date(inicio)) return;
         if (fim && dataRegistro > new Date(fim)) return;
+
+        // Filtros por tipo, pagamento, item e empresa
         if (filtroTipo && tipo !== filtroTipo) return;
         if (filtroPagamento && pagamento !== filtroPagamento) return;
-        if (filtroItem && !itens.includes(filtroItem)) return;
+        if (filtroItem && !itensArray.includes(filtroItem)) return;
         if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return;
 
         totalValor += valor;
 
         const tr = document.createElement("tr");
         tr.innerHTML = `
-        <td>${tipo}</td>
-        <td>${dataStr}</td>
-        <td>${itens}</td>
-        <td>${quantidades}</td>
-        <td>${peso}</td>
-        <td>${valor.toFixed(2)}</td>
-        <td>${pagamento}</td>
-        <td>${row.nome_empresa || ""}</td>
-      `;
+      <td>${tipo}</td>
+      <td>${dataStr}</td>
+      <td>${itensArray.join(", ")}</td>
+      <td>${quantidadesArray.join(", ")}</td>
+      <td>${peso}</td>
+      <td>${valor.toFixed(2)}</td>
+      <td>${pagamento}</td>
+      <td>${row.nome_empresa || ""}</td>
+    `;
         tbody.appendChild(tr);
       });
 
