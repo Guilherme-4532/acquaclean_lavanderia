@@ -13,10 +13,8 @@
   <div class="container">
     <h1>Dashboard AcquaClean</h1>
 
-    <!-- Botão de Exportar PDF -->
     <button class="btn-exportar" onclick="window.print()">📄 Exportar PDF</button>
 
-    <!-- Linha 1: Período -->
     <div class="filtros-linha1">
       <label for="filtro-periodo">Período:
         <select id="filtro-periodo">
@@ -35,7 +33,6 @@
       </label>
     </div>
 
-    <!-- Linha 2: Filtros adicionais -->
     <div class="filtros-linha2">
       <label for="filtro-tipo">Tipo:
         <select id="filtro-tipo">
@@ -58,31 +55,8 @@
       <label for="filtro-item">Item:
         <select id="filtro-item">
           <option value="">Todos</option>
-          <option value="Avental">Avental</option>
-          <option value="Blazer">Blazer</option>
-          <option value="Botina">Botina</option>
-          <option value="Calça social">Calça social</option>
-          <option value="Camisa social manga curta">Camisa social manga curta</option>
-          <option value="Camisa social manga longa">Camisa social manga longa</option>
-          <option value="Casaco">Casaco</option>
-          <option value="Coberdrom">Coberdrom</option>
-          <option value="Cobertor">Cobertor</option>
-          <option value="Colcha">Colcha</option>
-          <option value="Cortina">Cortina</option>
-          <option value="Edredom">Edredom</option>
-          <option value="Fronha">Fronha</option>
-          <option value="Jaleco">Jaleco</option>
-          <option value="Jaqueta">Jaqueta</option>
-          <option value="Lençois">Lençois</option>
-          <option value="Manta">Manta</option>
-          <option value="Tapete">Tapete</option>
-          <option value="Tenis">Tenis</option>
-          <option value="Terno">Terno</option>
-          <option value="Touca">Touca</option>
-          <option value="Travesseiro">Travesseiro</option>
-          <option value="Uniforme calça">Uniforme calça</option>
-          <option value="Uniforme camisa">Uniforme camisa</option>
           <option value="KG">KG</option>
+          <!-- incluir demais itens se desejar -->
         </select>
       </label>
 
@@ -95,7 +69,6 @@
       </div>
     </div>
 
-    <!-- Totalizadores -->
     <div class="totalizadores">
       <div class="card entrada">💰 Entradas: R$ <span id="total-entrada">0.00</span></div>
       <div class="card despesa">📉 Despesas: R$ <span id="total-despesa">0.00</span></div>
@@ -103,144 +76,235 @@
     </div>
     <div class="card saldo">💼 Saldo Estimado: R$ <span id="total-saldo">0.00</span></div>
 
-    <!-- Gráficos principais -->
     <div class="graficos-pares">
       <div id="grafico-por-tipo" class="grafico-container"></div>
       <div id="grafico-por-pagamento" class="grafico-container"></div>
     </div>
     <div id="grafico-por-data"></div>
-
-    <!-- Gráficos adicionais -->
     <div class="graficos-pares">
       <div id="grafico-por-item" class="grafico-container"></div>
       <div id="grafico-por-quantidade" class="grafico-container"></div>
     </div>
+    <div id="grafico-comparativo"></div>
 
     <br>
     <a href="index.html">← Voltar ao Menu Principal</a>
   </div>
 
-  <!-- Scripts -->
   <script type="module">
     import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    const supabase = createClient(
+      'https://vqfohtlpdhkzcnyupofk.supabase.co',
+      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE'
+    );
 
-    const supabaseUrl = 'https://vqfohtlpdhkzcnyupofk.supabase.co';
-    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE';
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    let dadosBrutos = [];
 
-    async function carregarDados() {
-      const { data: dados, error } = await supabase.from("registros").select("*");
-      if (error) {
-        alert("Erro ao carregar dados: " + error.message);
-        return;
-      }
-
-      const filtroPeriodo = document.getElementById("filtro-periodo").value;
-      const inicio = document.getElementById("data-inicio").value;
-      const fim = document.getElementById("data-fim").value;
-      const filtroTipo = document.getElementById("filtro-tipo").value;
-      const filtroPagamento = document.getElementById("filtro-pagamento").value;
-      const filtroItem = document.getElementById("filtro-item").value;
-      const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
-
-      const hoje = new Date();
-      const mesAtual = hoje.getMonth();
-      const anoAtual = hoje.getFullYear();
-
-      const porTipo = {}, porPagamento = {}, porData = {};
-      const porItem = {}, porQuantidade = {};
-
-      let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
-
-      dados.forEach(row => {
-        const tipo = row.tipo || "outros";
-        const valor = parseFloat(row.valor_total.replace(",", ".")) || 0;
-        const pagamento = row.forma_pagamento || "não informado";
-        const servico = row.itens || "";
-        const empresa = (row.nome_empresa || "").toLowerCase().trim();
-        const dataStr = row.data || "sem data";
-        const qtd = parseFloat(row.peso) || 0;
-
-        const [ano, mes, dia] = dataStr.split("-").length === 3 ? dataStr.split("-") : ["", "", ""];
-        const dataRegistro = new Date(`${ano}-${mes}-${dia}`);
-
-        if (!inicio && !fim && filtroPeriodo === "7dias") {
-          const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
-          if (diff > 7 || diff < 0) return;
-        } else if (!inicio && !fim && filtroPeriodo === "mes") {
-          if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return;
-        }
-
-        if (inicio && dataRegistro < new Date(inicio)) return;
-        if (fim && dataRegistro > new Date(fim)) return;
-        if (filtroTipo && tipo !== filtroTipo) return;
-        if (filtroPagamento && pagamento !== filtroPagamento) return;
-        if (filtroItem && !servico.includes(filtroItem)) return;
-        if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return;
-
-        porTipo[tipo] = (porTipo[tipo] || 0) + valor;
-        porPagamento[pagamento] = (porPagamento[pagamento] || 0) + valor;
-        porData[dataStr] = (porData[dataStr] || 0) + valor;
-        porItem[servico] = (porItem[servico] || 0) + valor;
-        porQuantidade[servico] = (porQuantidade[servico] || 0) + qtd;
-
-        if (tipo === "entrada") totalEntrada += valor;
-        if (tipo === "despesa") totalDespesa += valor;
-        if (tipo === "nf") totalNF += valor;
-      });
-
-      document.getElementById("total-entrada").textContent = totalEntrada.toFixed(2);
-      document.getElementById("total-despesa").textContent = totalDespesa.toFixed(2);
-      document.getElementById("total-nf").textContent = totalNF.toFixed(2);
-      document.getElementById("total-saldo").textContent = (totalEntrada - totalDespesa).toFixed(2);
-
-      desenharGraficoPizza("grafico-por-tipo", "Valores por Tipo de Registro", porTipo);
-      desenharGraficoPizza("grafico-por-pagamento", "Valores por Forma de Pagamento", porPagamento);
-      desenharGraficoColuna("grafico-por-data", "Totais por Data", porData);
-      desenharGraficoColuna("grafico-por-item", "Totais por Item/Serviço (R$)", porItem);
-      desenharGraficoColuna("grafico-por-quantidade", "Quantidade/Peso por Item", porQuantidade);
+    function formatarNumero(valor) {
+      return "R$ " + valor.toFixed(2).replace('.', ',');
     }
 
-    function desenharGraficoPizza(elementId, titulo, dadosObj) {
+    function legendaCentralizada() {
+      return {
+        position: 'bottom',
+        alignment: 'center',
+      };
+    }
+
+    function gerarCores(tipo) {
+      switch (tipo) {
+        case 'entrada': return '#4CAF50'; // verde
+        case 'despesa': return '#F44336'; // vermelho
+        case 'nf': return '#2196F3'; // azul
+        default: return '#9E9E9E';
+      }
+    }
+
+    async function carregarDados() {
+        const filtroPeriodo = document.getElementById("filtro-periodo").value;
+        const inicio = document.getElementById("data-inicio").value;
+        const fim = document.getElementById("data-fim").value;
+        const filtroTipo = document.getElementById("filtro-tipo").value;
+        const filtroPagamento = document.getElementById("filtro-pagamento").value;
+        const filtroItem = document.getElementById("filtro-item").value;
+        const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
+
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+        const { data, error } = await supabase.from('registros').select('*');
+        if (error) return alert("Erro: " + error.message);
+
+        dadosBrutos = data.filter(row => {
+          const dataRegistro = new Date(row.data);
+          const tipo = row.tipo || "";
+          const pagamento = row.forma_pagamento || "";
+          const servico = row.itens || "";
+          const empresa = (row.nome_empresa || "").toLowerCase();
+
+          if (filtroPeriodo === "7dias") {
+            const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
+            if (diff > 7 || diff < 0) return false;
+          } else if (filtroPeriodo === "mes") {
+            if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return false;
+          }
+
+          if (inicio && dataRegistro < new Date(inicio)) return false;
+          if (fim && dataRegistro > new Date(fim)) return false;
+          if (filtroTipo && tipo !== filtroTipo) return false;
+          if (filtroPagamento && pagamento !== filtroPagamento) return false;
+          if (filtroItem && !servico.includes(filtroItem)) return false;
+          if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return false;
+
+          return true;
+        });
+
+        // chama aqui suas funções de filtro, cálculo e desenho de gráficos
+        // como exemplo:
+        desenharGraficoPizza("grafico-por-tipo", "Valores por Tipo de Registro", agruparValores("tipo"));
+        desenharGraficoPizza("grafico-por-pagamento", "Valores por Forma de Pagamento", agruparValores("forma_pagamento"));
+        desenharGraficoColunaEmpilhada("grafico-por-data", "Totais por Mês", agruparTotaisMensais());
+        desenharGraficoPizza("grafico-por-item", "Totais por Item (Entradas)", agruparItensEntrada());
+        desenharGraficoColunaSimples("grafico-por-quantidade", "KG Lavados por Mês", agruparKGMensal());
+        desenharGraficoComparativo("grafico-comparativo", "Comparativo Mensal por Tipo", agruparComparativoMensal());
+
+        // Atualizar totalizadores
+        let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
+        dadosBrutos.forEach(row => {
+          const valor = parseFloat(row.valor_total || 0);
+          if (row.tipo === "entrada") totalEntrada += valor;
+          if (row.tipo === "despesa") totalDespesa += valor;
+          if (row.tipo === "nf") totalNF += valor;
+        });
+        document.getElementById("total-entrada").textContent = totalEntrada.toFixed(2);
+        document.getElementById("total-despesa").textContent = totalDespesa.toFixed(2);
+        document.getElementById("total-nf").textContent = totalNF.toFixed(2);
+        document.getElementById("total-saldo").textContent = (totalEntrada + totalNF - totalDespesa).toFixed(2);
+    }
+
+    function agruparValores(chave) {
+      const resultado = {};
+      dadosBrutos.forEach(row => {
+        const valor = parseFloat(row.valor_total || 0);
+        const k = row[chave] || "Indefinido";
+        resultado[k] = (resultado[k] || 0) + valor;
+      });
+      return resultado;
+    }
+
+    function agruparTotaisMensais() {
+      const meses = {};
+      dadosBrutos.forEach(row => {
+        const tipo = row.tipo;
+        const valor = parseFloat(row.valor_total || 0);
+        const data = new Date(row.data);
+        const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+        if (!meses[chave]) meses[chave] = { entrada: 0, despesa: 0, nf: 0 };
+        if (meses[chave][tipo] !== undefined) meses[chave][tipo] += valor;
+      });
+      return meses;
+    }
+
+    function agruparItensEntrada() {
+      const itens = {};
+      dadosBrutos.forEach(row => {
+        if (row.tipo !== "entrada") return;
+        const nomes = row.itens ? row.itens.replace(/[\[\]"]+/g, '').split(',') : [];
+        const valor = parseFloat(row.valor_total || 0);
+        nomes.forEach(item => {
+          itens[item.trim()] = (itens[item.trim()] || 0) + valor;
+        });
+      });
+      return itens;
+    }
+
+    function agruparKGMensal() {
+      const kg = {};
+      dadosBrutos.forEach(row => {
+        if (row.tipo === "entrada" && row.itens.includes("KG")) {
+          const data = new Date(row.data);
+          const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+          const peso = parseFloat(row.peso || 0);
+          kg[chave] = (kg[chave] || 0) + peso;
+        }
+      });
+      return kg;
+    }
+
+    function agruparComparativoMensal() {
+      const dados = agruparTotaisMensais();
+      const resultado = [["Mês", "Entradas", "Despesas", "NF"]];
+      Object.keys(dados).sort().forEach(mes => {
+        resultado.push([mes, dados[mes].entrada, dados[mes].despesa, dados[mes].nf]);
+      });
+      return resultado;
+    }
+
+    function desenharGraficoPizza(id, titulo, dadosObj) {
       const dataArray = [["Categoria", "Valor"]];
       for (const chave in dadosObj) {
         dataArray.push([chave, dadosObj[chave]]);
       }
       const data = google.visualization.arrayToDataTable(dataArray);
-      const options = {
+      const chart = new google.visualization.PieChart(document.getElementById(id));
+      chart.draw(data, {
         title: titulo,
         pieHole: 0.4,
-        legend: { position: "right" },
-        chartArea: { width: "90%", height: "80%" }
-      };
-      const chart = new google.visualization.PieChart(document.getElementById(elementId));
-      chart.draw(data, options);
+        chartArea: { width: "90%", height: "80%" },
+        legend: legendaCentralizada()
+      });
     }
 
-    function desenharGraficoColuna(elementId, titulo, dadosObj) {
-      const dataArray = [["Categoria", "Valor"]];
-      Object.keys(dadosObj).sort().forEach(key => {
-        dataArray.push([key, dadosObj[key]]);
+    function desenharGraficoColunaEmpilhada(id, titulo, dadosObj) {
+      const dataArray = [["Mês", "Entrada", "Despesa", "NF", { role: 'annotation' }]];
+      Object.keys(dadosObj).sort().forEach(mes => {
+        const d = dadosObj[mes];
+        const total = d.entrada + d.nf - d.despesa;
+        dataArray.push([mes, d.entrada, d.despesa, d.nf, formatarNumero(total)]);
       });
       const data = google.visualization.arrayToDataTable(dataArray);
-      const options = {
+      const chart = new google.visualization.ColumnChart(document.getElementById(id));
+      chart.draw(data, {
+        title: titulo,
+        legend: { position: "top" },
+        isStacked: true,
+        chartArea: { width: "90%", height: "70%" },
+        annotations: { alwaysOutside: true }
+      });
+    }
+
+    function desenharGraficoColunaSimples(id, titulo, dadosObj) {
+      const dataArray = [["Mês", "KG", { role: 'annotation' }]];
+      let acumulado = 0;
+      Object.keys(dadosObj).sort().forEach(mes => {
+        acumulado += dadosObj[mes];
+        dataArray.push([mes, dadosObj[mes], acumulado.toFixed(0) + " KG"]);
+      });
+      const data = google.visualization.arrayToDataTable(dataArray);
+      const chart = new google.visualization.ColumnChart(document.getElementById(id));
+      chart.draw(data, {
         title: titulo,
         legend: { position: "none" },
-        hAxis: { title: "Categoria" },
-        vAxis: { title: "Valor" },
-        chartArea: { width: "90%", height: "70%" }
-      };
-      const chart = new google.visualization.ColumnChart(document.getElementById(elementId));
-      chart.draw(data, options);
+        chartArea: { width: "90%", height: "70%" },
+        annotations: { alwaysOutside: true }
+      });
     }
-    
-    document.getElementById("filtro-periodo").addEventListener("change", carregarDados);
-    window.addEventListener("load", () => {
-      google.charts.load("current", { packages: ["corechart"] });
-      google.charts.setOnLoadCallback(carregarDados);
-    });
 
+    function desenharGraficoComparativo(id, titulo, dadosArray) {
+      const data = google.visualization.arrayToDataTable(dadosArray);
+      const chart = new google.visualization.ColumnChart(document.getElementById(id));
+      chart.draw(data, {
+        title: titulo,
+        legend: { position: "top" },
+        chartArea: { width: "90%", height: "70%" },
+        annotations: { alwaysOutside: true }
+      });
+    }
+
+    google.charts.load('current', { packages: ['corechart'] });
+    google.charts.setOnLoadCallback(carregarDados);
   </script>
+
   <footer class="rodape">
     <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
   </footer>

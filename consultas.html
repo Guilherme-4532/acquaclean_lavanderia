@@ -11,9 +11,13 @@
   <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
   <div class="container">
     <h1>Consultas e Registros</h1>
+    <p class="titulo-print" style="display: none;">Lavanderia AcquaClean - Relatório de Registros</p>
+
 
     <!-- Botão Exportar -->
     <button class="btn-exportar" onclick="window.print()">📄 Exportar PDF</button>
+    <button class="btn-exportar" onclick="exportarParaExcel()">📊 Exportar Excel</button>
+
 
     <!-- Filtros linha 1 -->
     <div class="filtros-linha1">
@@ -97,28 +101,21 @@
     </div>
 
     <!-- Tabela -->
-    <table id="tabela" border="1" style="width: 100%; margin-top: 30px;">
-      <thead>
-        <tr>
-          <th>Tipo</th>
-          <th>Data</th>
-          <th>Item</th>
-          <th>Quantidade</th>
-          <th>Peso</th>
-          <th>Valor (R$)</th>
-          <th>Pagamento</th>
-          <th>Empresa</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-      <tfoot>
-        <tr>
-          <td colspan="5" style="text-align: right; font-weight: bold;">Total:</td>
-          <td id="total-geral" style="font-weight: bold;">0.00</td>
-          <td colspan="2"></td>
-        </tr>
-      </tfoot>
-    </table>
+    <!-- Tabela com cabeçalho fixo -->
+    <div class="tabela-container">
+      <table id="tabela" border="1" style="width: 100%;">
+        <thead></thead>
+        <tbody></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="100%" style="text-align: right; font-weight: bold;">
+              Total: R$ <span id="total-geral">0.00</span>
+            </td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
 
     <br>
     <a href="index.html">← Voltar ao Menu Principal</a>
@@ -150,10 +147,56 @@
       const mesAtual = hoje.getMonth();
       const anoAtual = hoje.getFullYear();
 
+      const thead = document.querySelector("#tabela thead");
       const tbody = document.querySelector("#tabela tbody");
       const totalGeral = document.getElementById("total-geral");
       tbody.innerHTML = "";
+      totalGeral.textContent = "0.00";
       let totalValor = 0;
+
+      // Cabeçalhos dinâmicos
+      if (!filtroTipo) {
+        thead.innerHTML = `
+      <tr>
+        <th>Tipo</th>
+        <th>Data</th>
+        <th>Descrição / Itens</th>
+        <th>Quantidade</th>
+        <th>Peso</th>
+        <th>Valor (R$)</th>
+        <th>Forma Pagamento</th>
+        <th>Empresa / Nº NF / Nº Comanda</th>
+      </tr>`;
+      } else if (filtroTipo === "entrada") {
+        thead.innerHTML = `
+      <tr>
+        <th>Data</th>
+        <th>Nº Comanda</th>
+        <th>Forma Pagamento</th>
+        <th>Itens</th>
+        <th>Peso</th>
+        <th>Quantidade</th>
+        <th>Valor (R$)</th>
+      </tr>`;
+      } else if (filtroTipo === "despesa") {
+        thead.innerHTML = `
+      <tr>
+        <th>Data</th>
+        <th>Descrição</th>
+        <th>Quantidade</th>
+        <th>Valor (R$)</th>
+        <th>Forma Pagamento</th>
+      </tr>`;
+      } else if (filtroTipo === "nf") {
+        thead.innerHTML = `
+      <tr>
+        <th>Data</th>
+        <th>Nº NF</th>
+        <th>Empresa</th>
+        <th>Valor (R$)</th>
+        <th>Forma Pagamento</th>
+      </tr>`;
+      }
 
       dados.forEach(row => {
         const tipo = row.tipo || "";
@@ -162,43 +205,38 @@
         const empresa = (row.nome_empresa || "").toLowerCase().trim();
 
         let itensArray = [];
-        let quantidadesArray = [];
-
         try {
           itensArray = Array.isArray(row.itens) ? row.itens : JSON.parse(row.itens || "[]");
+          if (!Array.isArray(itensArray)) itensArray = [];
         } catch (e) {
           itensArray = [];
         }
 
+        let quantidadesArray = [];
         try {
           quantidadesArray = Array.isArray(row.quantidades) ? row.quantidades : JSON.parse(row.quantidades || "[]");
+          if (!Array.isArray(quantidadesArray)) quantidadesArray = [];
         } catch (e) {
           quantidadesArray = [];
         }
 
-        const peso = row.peso || "";
-        const valor = typeof row.valor_total === "string" ? parseFloat(row.valor_total.replace(",", ".")) : parseFloat(row.valor_total) || 0;
+        const peso = row.peso || "-";
+        const valor = parseFloat((row.valor_total || "0").toString().replace(",", ".")) || 0;
+        const dataRegistro = new Date(dataStr);
+        if (isNaN(dataRegistro)) return;
 
-        let dataRegistro = null;
-        if (dataStr && dataStr.includes("-")) {
-          const [ano, mes, dia] = dataStr.split("-");
-          dataRegistro = new Date(`${ano}-${mes}-${dia}`);
-        } else {
-          dataRegistro = new Date("2100-01-01");
+        // Filtros
+        if (filtroPeriodo === "7dias") {
+          const seteDiasAtras = new Date();
+          seteDiasAtras.setDate(hoje.getDate() - 7);
+          if (dataRegistro < seteDiasAtras || dataRegistro > hoje) return;
         }
-
-        // Filtros de data
-        if (!inicio && !fim && filtroPeriodo === "7dias") {
-          const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
-          if (diff > 7 || diff < 0) return;
-        } else if (!inicio && !fim && filtroPeriodo === "mes") {
+        if (filtroPeriodo === "mes") {
           if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return;
         }
         if (inicio && dataRegistro < new Date(inicio)) return;
         if (fim && dataRegistro > new Date(fim)) return;
-
-        // Filtros por tipo, pagamento, item e empresa
-        if (filtroTipo && tipo !== filtroTipo) return;
+        if (filtroTipo && tipo.toLowerCase() !== filtroTipo.toLowerCase()) return;
         if (filtroPagamento && pagamento !== filtroPagamento) return;
         if (filtroItem && !itensArray.includes(filtroItem)) return;
         if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return;
@@ -206,21 +244,61 @@
         totalValor += valor;
 
         const tr = document.createElement("tr");
-        tr.innerHTML = `
-      <td>${tipo}</td>
-      <td>${dataStr}</td>
-      <td>${itensArray.join(", ")}</td>
-      <td>${quantidadesArray.join(", ")}</td>
-      <td>${peso}</td>
-      <td>${valor.toFixed(2)}</td>
-      <td>${pagamento}</td>
-      <td>${row.nome_empresa || ""}</td>
-    `;
+
+        if (!filtroTipo) {
+          tr.innerHTML = `
+        <td>${tipo}</td>
+        <td>${dataStr}</td>
+        <td>${row.descricao || itensArray.join(", ") || "-"}</td>
+        <td>${quantidadesArray.join(", ") || "-"}</td>
+        <td>${peso || "-"}</td>
+        <td>${valor.toFixed(2)}</td>
+        <td>${pagamento}</td>
+        <td>${row.nome_empresa || row.numero_nf || row.numero_comanda || "-"}</td>
+      `;
+        }
+
+        if (filtroTipo === "entrada") {
+          tr.innerHTML = `
+        <td>${dataStr}</td>
+        <td>${row.numero_comanda || "-"}</td>
+        <td>${pagamento}</td>
+        <td>${itensArray.join(", ")}</td>
+        <td>${peso}</td>
+        <td>${quantidadesArray.join(", ")}</td>
+        <td>${valor.toFixed(2)}</td>
+      `;
+        }
+
+        if (filtroTipo === "despesa") {
+          const qtd = quantidadesArray.length > 0 ? quantidadesArray.join(", ") : (row.quantidades || "-");
+          tr.innerHTML = `
+    <td>${dataStr}</td>
+    <td>${row.descricao || "-"}</td>
+    <td>${qtd}</td>
+    <td>${valor.toFixed(2)}</td>
+    <td>${pagamento}</td>
+  `;
+        }
+
+
+        if (filtroTipo === "nf") {
+          tr.innerHTML = `
+        <td>${dataStr}</td>
+        <td>${row.numero_nf || "-"}</td>
+        <td>${row.nome_empresa || "-"}</td>
+        <td>${valor.toFixed(2)}</td>
+        <td>${pagamento}</td>
+      `;
+        }
+
         tbody.appendChild(tr);
       });
 
       totalGeral.textContent = totalValor.toFixed(2);
     }
+
+
 
     function limparFiltros() {
       document.getElementById("filtro-periodo").value = "todos";
@@ -233,6 +311,11 @@
       carregarDados();
     }
 
+    // Expor funções globalmente para funcionar com onclick no HTML
+    window.carregarDados = carregarDados;
+    window.limparFiltros = limparFiltros;
+
+    // Executar carregamento inicial ao abrir a página
     window.onload = () => {
       carregarDados();
       document.getElementById("ano-atual").textContent = new Date().getFullYear();
@@ -241,6 +324,19 @@
   <footer class="rodape">
     <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
   </footer>
+  <script>
+    function exportarParaExcel() {
+      const tabela = document.getElementById("tabela");
+      const html = tabela.outerHTML.replace(/ /g, '%20');
+
+      const nomeArquivo = `registros_acquaclean_${new Date().toLocaleDateString('pt-BR')}.xls`;
+
+      const link = document.createElement('a');
+      link.href = 'data:application/vnd.ms-excel,' + html;
+      link.download = nomeArquivo;
+      link.click();
+    }
+  </script>
 </body>
 
 </html>
