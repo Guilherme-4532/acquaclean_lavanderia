@@ -26,6 +26,7 @@
           <option value="todos">Todos</option>
           <option value="7dias">Últimos 7 dias</option>
           <option value="mes">Mês atual</option>
+          <option value="mes_anterior">Mês anterior</option>
         </select>
       </label>
 
@@ -91,8 +92,12 @@
       </label>
 
       <label for="filtro-empresa">Empresa:
-        <input type="text" id="filtro-empresa" placeholder="Nome da Empresa">
+        <select id="filtro-empresa">
+          <option value="">Todas</option>
+          <!-- opções serão preenchidas via JavaScript -->
+        </select>
       </label>
+
 
       <div class="bloco-filtrar">
         <button class="btn-filtrar" onclick="carregarDados()" title="Filtrar">🔍</button>
@@ -115,8 +120,6 @@
         </tfoot>
       </table>
     </div>
-
-
     <br>
     <a href="index.html">← Voltar ao Menu Principal</a>
   </div>
@@ -141,7 +144,7 @@
       const filtroTipo = document.getElementById("filtro-tipo").value;
       const filtroPagamento = document.getElementById("filtro-pagamento").value;
       const filtroItem = document.getElementById("filtro-item").value;
-      const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
+      const filtroEmpresa = document.getElementById("filtro-empresa").value;
 
       const hoje = new Date();
       const mesAtual = hoje.getMonth();
@@ -234,16 +237,29 @@
         if (filtroPeriodo === "mes") {
           if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return;
         }
+        if (filtroPeriodo === "mes_anterior") {
+          const mesAnterior = mesAtual === 0 ? 11 : mesAtual - 1;
+          const anoMesAnterior = mesAtual === 0 ? anoAtual - 1 : anoAtual;
+          if (dataRegistro.getMonth() !== mesAnterior || dataRegistro.getFullYear() !== anoMesAnterior) return;
+        }
         if (inicio && dataRegistro < new Date(inicio)) return;
         if (fim && dataRegistro > new Date(fim)) return;
         if (filtroTipo && tipo.toLowerCase() !== filtroTipo.toLowerCase()) return;
         if (filtroPagamento && pagamento !== filtroPagamento) return;
         if (filtroItem && !itensArray.includes(filtroItem)) return;
-        if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return;
+        if (filtroEmpresa && row.nome_empresa !== filtroEmpresa) return;
+
 
         totalValor += valor;
 
         const tr = document.createElement("tr");
+
+        if (tipo === "despesa") {
+          tr.style.color = "#c0392b"; // vermelho escuro
+        } else if (tipo === "entrada" || tipo === "nf") {
+          tr.style.color = "#27ae60"; // verde forte
+        }
+
 
         if (!filtroTipo) {
           tr.innerHTML = `
@@ -297,6 +313,33 @@
 
       totalGeral.textContent = totalValor.toFixed(2);
     }
+    async function preencherFiltroEmpresa() {
+      const { data, error } = await supabase
+        .from("registros")
+        .select("nome_empresa")
+        .neq("nome_empresa", null); // ignora registros nulos
+
+      if (error) {
+        console.error("Erro ao carregar empresas:", error.message);
+        return;
+      }
+
+      // Cria um array com nomes únicos
+      const empresasUnicas = [...new Set(data.map(e => e.nome_empresa).filter(Boolean))].sort();
+
+      // Preenche o select
+      const select = document.getElementById("filtro-empresa");
+
+      empresasUnicas.forEach(nome => {
+        const opt = document.createElement("option");
+        opt.value = nome;
+        opt.textContent = nome;
+        select.appendChild(opt);
+      });
+    }
+    window.addEventListener("DOMContentLoaded", () => {
+      preencherFiltroEmpresa();
+    });
 
 
 

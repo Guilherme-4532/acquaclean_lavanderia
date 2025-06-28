@@ -187,6 +187,39 @@ h1 {
   .container {
     padding: 0;
   }
+
+  /* Exibe título do relatório */
+  .titulo-print {
+    display: block !important;
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+
+  /* Faz a tabela expandir e mostra o rodapé */
+  .tabela-container {
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  #tabela {
+    page-break-inside: auto;
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  #tabela thead {
+    display: table-header-group;
+  }
+
+
+  /* Mantém legibilidade dos dados */
+  #tabela td,
+  #tabela th {
+    padding: 6px;
+    border: 1px solid #ccc;
+  }
 }
 
 /* ========================
@@ -636,4 +669,78 @@ footer.rodape {
 /* Realce no hover */
 #tabela tbody tr:hover {
   background-color: #eef6fa;
+}
+
+/* Container com rolagem */
+.tabela-container {
+  max-height: 500px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  margin-top: 15px;
+}
+
+/* Cabeçalho da tabela fixo */
+#tabela thead th {
+  position: sticky;
+  top: 0;
+  background-color: #8e44ad;
+  /* Roxo escuro */
+  color: #fbfbfc;
+  /* Branco gelo */
+  z-index: 10;
+  padding: 8px;
+  border-bottom: 2px solid #000000;
+  text-align: left;
+}
+
+/* Forçar layout correto da tabela */
+#tabela {
+  border-collapse: collapse;
+  width: 100%;
+  table-layout: auto;
+}
+
+@media print {
+  body {
+    margin: 0;
+    padding: 0;
+    font-size: 12px;
+  }
+
+  .btn-exportar,
+  .btn-filtrar,
+  a[href],
+  .rodape {
+    display: none !important;
+  }
+
+  .titulo-print {
+    display: block !important;
+    text-align: center;
+    font-size: 18px;
+    margin-bottom: 20px;
+    font-weight: bold;
+  }
+
+  .filtros-linha1,
+  .filtros-linha2 {
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+
+  label {
+    font-weight: bold;
+    margin-right: 15px;
+  }
+
+  select,
+  input[type="date"],
+  input[type="text"] {
+    border: none;
+    background: transparent;
+    font-weight: normal;
+    pointer-events: none;
+  }
 }

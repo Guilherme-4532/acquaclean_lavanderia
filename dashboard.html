@@ -101,7 +101,10 @@
     let dadosBrutos = [];
 
     function formatarNumero(valor) {
-      return "R$ " + valor.toFixed(2).replace('.', ',');
+      return "R$ " + valor.toLocaleString("pt-BR", {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
     }
 
     function legendaCentralizada() {
@@ -121,65 +124,65 @@
     }
 
     async function carregarDados() {
-        const filtroPeriodo = document.getElementById("filtro-periodo").value;
-        const inicio = document.getElementById("data-inicio").value;
-        const fim = document.getElementById("data-fim").value;
-        const filtroTipo = document.getElementById("filtro-tipo").value;
-        const filtroPagamento = document.getElementById("filtro-pagamento").value;
-        const filtroItem = document.getElementById("filtro-item").value;
-        const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
+      const filtroPeriodo = document.getElementById("filtro-periodo").value;
+      const inicio = document.getElementById("data-inicio").value;
+      const fim = document.getElementById("data-fim").value;
+      const filtroTipo = document.getElementById("filtro-tipo").value;
+      const filtroPagamento = document.getElementById("filtro-pagamento").value;
+      const filtroItem = document.getElementById("filtro-item").value;
+      const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
 
-        const hoje = new Date();
-        const mesAtual = hoje.getMonth();
-        const anoAtual = hoje.getFullYear();
-        const { data, error } = await supabase.from('registros').select('*');
-        if (error) return alert("Erro: " + error.message);
+      const hoje = new Date();
+      const mesAtual = hoje.getMonth();
+      const anoAtual = hoje.getFullYear();
+      const { data, error } = await supabase.from('registros').select('*');
+      if (error) return alert("Erro: " + error.message);
 
-        dadosBrutos = data.filter(row => {
-          const dataRegistro = new Date(row.data);
-          const tipo = row.tipo || "";
-          const pagamento = row.forma_pagamento || "";
-          const servico = row.itens || "";
-          const empresa = (row.nome_empresa || "").toLowerCase();
+      dadosBrutos = data.filter(row => {
+        const dataRegistro = new Date(row.data);
+        const tipo = row.tipo || "";
+        const pagamento = row.forma_pagamento || "";
+        const servico = row.itens || "";
+        const empresa = (row.nome_empresa || "").toLowerCase();
 
-          if (filtroPeriodo === "7dias") {
-            const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
-            if (diff > 7 || diff < 0) return false;
-          } else if (filtroPeriodo === "mes") {
-            if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return false;
-          }
+        if (filtroPeriodo === "7dias") {
+          const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
+          if (diff > 7 || diff < 0) return false;
+        } else if (filtroPeriodo === "mes") {
+          if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return false;
+        }
 
-          if (inicio && dataRegistro < new Date(inicio)) return false;
-          if (fim && dataRegistro > new Date(fim)) return false;
-          if (filtroTipo && tipo !== filtroTipo) return false;
-          if (filtroPagamento && pagamento !== filtroPagamento) return false;
-          if (filtroItem && !servico.includes(filtroItem)) return false;
-          if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return false;
+        if (inicio && dataRegistro < new Date(inicio)) return false;
+        if (fim && dataRegistro > new Date(fim)) return false;
+        if (filtroTipo && tipo !== filtroTipo) return false;
+        if (filtroPagamento && pagamento !== filtroPagamento) return false;
+        if (filtroItem && !servico.includes(filtroItem)) return false;
+        if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return false;
 
-          return true;
-        });
+        return true;
+      });
 
-        // chama aqui suas funções de filtro, cálculo e desenho de gráficos
-        // como exemplo:
-        desenharGraficoPizza("grafico-por-tipo", "Valores por Tipo de Registro", agruparValores("tipo"));
-        desenharGraficoPizza("grafico-por-pagamento", "Valores por Forma de Pagamento", agruparValores("forma_pagamento"));
-        desenharGraficoColunaEmpilhada("grafico-por-data", "Totais por Mês", agruparTotaisMensais());
-        desenharGraficoPizza("grafico-por-item", "Totais por Item (Entradas)", agruparItensEntrada());
-        desenharGraficoColunaSimples("grafico-por-quantidade", "KG Lavados por Mês", agruparKGMensal());
-        desenharGraficoComparativo("grafico-comparativo", "Comparativo Mensal por Tipo", agruparComparativoMensal());
+      // chama aqui suas funções de filtro, cálculo e desenho de gráficos
+      // como exemplo:
+      desenharGraficoPizza("grafico-por-tipo", "Valores por Tipo de Registro", agruparValores("tipo"));
+      desenharGraficoPizza("grafico-por-pagamento", "Valores por Forma de Pagamento", agruparValores("forma_pagamento"));
+      desenharGraficoColunaEmpilhada("grafico-por-data", "Totais por Mês", agruparTotaisMensais());
+      desenharGraficoPizza("grafico-por-item", "Totais por Item (Entradas)", agruparItensEntrada());
+      desenharGraficoColunaSimples("grafico-por-quantidade", "KG Lavados por Mês", agruparKGMensal());
+      desenharGraficoComparativo("grafico-comparativo", "Comparativo Mensal por Tipo", agruparComparativoMensal());
 
-        // Atualizar totalizadores
-        let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
-        dadosBrutos.forEach(row => {
-          const valor = parseFloat(row.valor_total || 0);
-          if (row.tipo === "entrada") totalEntrada += valor;
-          if (row.tipo === "despesa") totalDespesa += valor;
-          if (row.tipo === "nf") totalNF += valor;
-        });
-        document.getElementById("total-entrada").textContent = totalEntrada.toFixed(2);
-        document.getElementById("total-despesa").textContent = totalDespesa.toFixed(2);
-        document.getElementById("total-nf").textContent = totalNF.toFixed(2);
-        document.getElementById("total-saldo").textContent = (totalEntrada + totalNF - totalDespesa).toFixed(2);
+      // Atualizar totalizadores
+      let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
+      dadosBrutos.forEach(row => {
+        const valor = parseFloat(row.valor_total || 0);
+        if (row.tipo === "entrada") totalEntrada += valor;
+        if (row.tipo === "despesa") totalDespesa += valor;
+        if (row.tipo === "nf") totalNF += valor;
+      });
+      document.getElementById("total-entrada").textContent = formatarNumero(totalEntrada);
+      document.getElementById("total-despesa").textContent = formatarNumero(totalDespesa);
+      document.getElementById("total-nf").textContent = formatarNumero(totalNF);
+      document.getElementById("total-saldo").textContent = formatarNumero(totalEntrada + totalNF - totalDespesa);
     }
 
     function agruparValores(chave) {
@@ -256,30 +259,68 @@
     }
 
     function desenharGraficoColunaEmpilhada(id, titulo, dadosObj) {
-      const dataArray = [["Mês", "Entrada", "Despesa", "NF", { role: 'annotation' }]];
+      const dataArray = [["Mês", "Entrada", "Despesa", "NF", { type: 'number', label: 'Lucro' }, { role: 'annotation' }]];
+
+      let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
+
       Object.keys(dadosObj).sort().forEach(mes => {
         const d = dadosObj[mes];
-        const total = d.entrada + d.nf - d.despesa;
-        dataArray.push([mes, d.entrada, d.despesa, d.nf, formatarNumero(total)]);
+        const lucro = d.entrada + d.nf - d.despesa;
+        totalEntrada += d.entrada;
+        totalDespesa += d.despesa;
+        totalNF += d.nf;
+        dataArray.push([
+          mes,
+          d.entrada,
+          d.despesa,
+          d.nf,
+          lucro,
+          formatarNumero(lucro)
+        ]);
       });
+
+      // Adiciona barra final com o total acumulado
+      const lucroTotal = totalEntrada + totalNF - totalDespesa;
+      dataArray.push([
+        "Acumulado",
+        totalEntrada,
+        totalDespesa,
+        totalNF,
+        lucroTotal,
+        formatarNumero(lucroTotal)
+      ]);
+
       const data = google.visualization.arrayToDataTable(dataArray);
-      const chart = new google.visualization.ColumnChart(document.getElementById(id));
+
+      const chart = new google.visualization.ComboChart(document.getElementById(id));
       chart.draw(data, {
         title: titulo,
-        legend: { position: "top" },
         isStacked: true,
+        legend: { position: "top" },
         chartArea: { width: "90%", height: "70%" },
-        annotations: { alwaysOutside: true }
+        annotations: { alwaysOutside: true },
+        seriesType: 'bars',
+        series: {
+          0: { color: '#4CAF50' }, // Entrada
+          1: { color: '#F44336' }, // Despesa
+          2: { color: '#2196F3' }, // NF
+          3: { type: 'line', color: '#000000', lineWidth: 2, pointSize: 6 } // Lucro
+        }
       });
     }
 
     function desenharGraficoColunaSimples(id, titulo, dadosObj) {
       const dataArray = [["Mês", "KG", { role: 'annotation' }]];
       let acumulado = 0;
+
       Object.keys(dadosObj).sort().forEach(mes => {
         acumulado += dadosObj[mes];
         dataArray.push([mes, dadosObj[mes], acumulado.toFixed(0) + " KG"]);
       });
+
+      // Adiciona barra final com total acumulado
+      dataArray.push(["Acumulado", acumulado, acumulado.toFixed(0) + " KG"]);
+
       const data = google.visualization.arrayToDataTable(dataArray);
       const chart = new google.visualization.ColumnChart(document.getElementById(id));
       chart.draw(data, {
@@ -290,16 +331,77 @@
       });
     }
 
+
     function desenharGraficoComparativo(id, titulo, dadosArray) {
-      const data = google.visualization.arrayToDataTable(dadosArray);
+      const acumulado = { entrada: 0, despesa: 0, nf: 0 };
+      const novosDados = [
+        ["Mês", "Entradas", { role: "annotation" }, "Despesas", { role: "annotation" }, "NF", { role: "annotation" }]
+      ];
+
+      const linhas = dadosArray.slice(1); // ignora cabeçalho original
+
+      linhas.forEach(([mes, entrada, despesa, nf]) => {
+        acumulado.entrada += entrada;
+        acumulado.despesa += despesa;
+        acumulado.nf += nf;
+
+        novosDados.push([
+          mes,
+          entrada, entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+          despesa, despesa.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+          nf, nf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+        ]);
+      });
+
+      // Linha de acumulado
+      novosDados.push([
+        "Acumulado",
+        acumulado.entrada, acumulado.entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+        acumulado.despesa, acumulado.despesa.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+        acumulado.nf, acumulado.nf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+      ]);
+
+      const data = google.visualization.arrayToDataTable(novosDados);
       const chart = new google.visualization.ColumnChart(document.getElementById(id));
+
       chart.draw(data, {
         title: titulo,
-        legend: { position: "top" },
-        chartArea: { width: "90%", height: "70%" },
-        annotations: { alwaysOutside: true }
+        legend: {
+          position: "top",
+          alignment: "center",
+          textStyle: { fontSize: 13 }
+        },
+        chartArea: {
+          left: 70,
+          top: 60,
+          width: "90%",
+          height: "65%"  // Reduz um pouco a altura da área dos gráficos para dar espaço para o eixo
+        },
+        height: 500, // Aumenta a altura total do gráfico
+        bar: {
+          groupWidth: "60%" // Ajuste visual para espaçamento entre colunas
+        },
+        annotations: {
+          alwaysOutside: true,
+          textStyle: {
+            fontSize: 12,
+            bold: true
+          }
+        },
+        vAxis: {
+          textStyle: { fontSize: 12 },
+          format: "currency"
+        },
+        hAxis: {
+          slantedText: true,
+          slantedTextAngle: 30,
+          textStyle: { fontSize: 12 }
+        }
       });
+
     }
+
+
 
     google.charts.load('current', { packages: ['corechart'] });
     google.charts.setOnLoadCallback(carregarDados);
