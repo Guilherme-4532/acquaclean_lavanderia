@@ -9,7 +9,9 @@
 </head>
 
 <body>
-  <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  <a href="index.html">
+    <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  </a>
   <div class="container">
     <h1>Dashboard AcquaClean</h1>
 
@@ -21,8 +23,10 @@
           <option value="todos">Todos</option>
           <option value="7dias">Últimos 7 dias</option>
           <option value="mes">Mês atual</option>
+          <option value="mesAnterior">Mês anterior</option>
         </select>
       </label>
+
 
       <label for="data-inicio">De:
         <input type="date" id="data-inicio">
@@ -56,364 +60,450 @@
         <select id="filtro-item">
           <option value="">Todos</option>
           <option value="KG">KG</option>
-          <!-- incluir demais itens se desejar -->
+          <!-- demais itens -->
         </select>
       </label>
 
-      <label for="filtro-empresa">Empresa:
-        <input type="text" id="filtro-empresa" placeholder="Nome da Empresa">
-      </label>
+      <div class="filtro-empresa-botoes">
+        <label for="filtro-empresa">Empresa:
+          <select id="filtro-empresa">
+            <option value="">Todas</option>
+            <!-- será preenchido via JavaScript -->
+          </select>
+        </label>
 
-      <div class="bloco-filtrar">
-        <button class="btn-filtrar" onclick="carregarDados()" title="Filtrar">🔍</button>
+        <div class="grupo-botoes-filtro">
+          <button class="btn-filtrar" onclick="carregarDados()" title="Filtrar">🔍</button>
+          <button class="btn-resetar" onclick="resetarFiltros()" title="Limpar filtros">♻</button>
+        </div>
       </div>
     </div>
 
+    <!-- Totalizadores alinhados lado a lado -->
     <div class="totalizadores">
-      <div class="card entrada">💰 Entradas: R$ <span id="total-entrada">0.00</span></div>
-      <div class="card despesa">📉 Despesas: R$ <span id="total-despesa">0.00</span></div>
-      <div class="card nf">📄 NF Emitidas: R$ <span id="total-nf">0.00</span></div>
+      <div class="linha-superior">
+        <div class="card entrada">💰 Entradas: <span id="total-entrada">0.00</span></div>
+        <div class="card despesa">📉 Despesas: <span id="total-despesa">0.00</span></div>
+        <div class="card nf">📄 NF Emitidas: <span id="total-nf">0.00</span></div>
+      </div>
+      <div class="linha-saldo">
+        <div class="card saldo total-saldo">💼 Saldo Estimado: <span id="total-saldo">0.00</span></div>
+      </div>
     </div>
-    <div class="card saldo">💼 Saldo Estimado: R$ <span id="total-saldo">0.00</span></div>
 
+    <!-- Linha 1: Tipo e Pagamento -->
     <div class="graficos-pares">
       <div id="grafico-por-tipo" class="grafico-container"></div>
       <div id="grafico-por-pagamento" class="grafico-container"></div>
     </div>
-    <div id="grafico-por-data"></div>
+
+    <!-- Linha 2: Por Data -->
+    <div class="grafico-centralizado">
+      <div id="grafico-por-data" class="grafico-container-largo"></div>
+    </div>
+
+    <!-- Linha 3: Por Item e KG -->
     <div class="graficos-pares">
       <div id="grafico-por-item" class="grafico-container"></div>
       <div id="grafico-por-quantidade" class="grafico-container"></div>
     </div>
-    <div id="grafico-comparativo"></div>
+
+    <!-- Linha 4: Comparativo Mensal -->
+    <div class="grafico-centralizado">
+      <div id="grafico-comparativo" class="grafico-container-largo"></div>
+    </div>
 
     <br>
-    <a href="index.html">← Voltar ao Menu Principal</a>
-  </div>
+    <div class="voltar-container">
+      <a href="index.html" class="btn-voltar">← Voltar ao Menu Principal</a>
+    </div>
 
-  <script type="module">
-    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
-    const supabase = createClient(
-      'https://vqfohtlpdhkzcnyupofk.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE'
-    );
 
-    let dadosBrutos = [];
+    <script type="module">
+      import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+      const supabase = createClient(
+        'https://vqfohtlpdhkzcnyupofk.supabase.co',
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE'
+      );
 
-    function formatarNumero(valor) {
-      return "R$ " + valor.toLocaleString("pt-BR", {
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2
-      });
-    }
+      let dadosBrutos = [];
 
-    function legendaCentralizada() {
-      return {
-        position: 'bottom',
-        alignment: 'center',
-      };
-    }
-
-    function gerarCores(tipo) {
-      switch (tipo) {
-        case 'entrada': return '#4CAF50'; // verde
-        case 'despesa': return '#F44336'; // vermelho
-        case 'nf': return '#2196F3'; // azul
-        default: return '#9E9E9E';
+      function formatarNumero(valor) {
+        return "R$ " + valor.toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
       }
-    }
 
-    async function carregarDados() {
-      const filtroPeriodo = document.getElementById("filtro-periodo").value;
-      const inicio = document.getElementById("data-inicio").value;
-      const fim = document.getElementById("data-fim").value;
-      const filtroTipo = document.getElementById("filtro-tipo").value;
-      const filtroPagamento = document.getElementById("filtro-pagamento").value;
-      const filtroItem = document.getElementById("filtro-item").value;
-      const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
+      function legendaCentralizada() {
+        return {
+          position: 'bottom',
+          alignment: 'center',
+        };
+      }
 
-      const hoje = new Date();
-      const mesAtual = hoje.getMonth();
-      const anoAtual = hoje.getFullYear();
-      const { data, error } = await supabase.from('registros').select('*');
-      if (error) return alert("Erro: " + error.message);
+      function gerarCores(tipo) {
+        switch (tipo) {
+          case 'entrada': return '#4CAF50'; // verde
+          case 'despesa': return '#F44336'; // vermelho
+          case 'nf': return '#2196F3'; // azul
+          default: return '#9E9E9E';
+        }
+      }
 
-      dadosBrutos = data.filter(row => {
-        const dataRegistro = new Date(row.data);
-        const tipo = row.tipo || "";
-        const pagamento = row.forma_pagamento || "";
-        const servico = row.itens || "";
-        const empresa = (row.nome_empresa || "").toLowerCase();
+      async function carregarDados() {
+        const filtroPeriodo = document.getElementById("filtro-periodo").value;
+        const filtroTipo = document.getElementById("filtro-tipo").value;
+        const filtroPagamento = document.getElementById("filtro-pagamento").value;
+        const filtroItem = document.getElementById("filtro-item").value;
+        const filtroEmpresa = document.getElementById("filtro-empresa").value.toLowerCase().trim();
+
+        // Campos de data manuais
+        const inputInicio = document.getElementById("data-inicio").value;
+        const inputFim = document.getElementById("data-fim").value;
+
+        const hoje = new Date();
+        const mesAtual = hoje.getMonth();
+        const anoAtual = hoje.getFullYear();
+
+        // Determina intervalo de datas conforme filtro "Período"
+        let dataInicioFiltro = null;
+        let dataFimFiltro = null;
 
         if (filtroPeriodo === "7dias") {
-          const diff = (hoje - dataRegistro) / (1000 * 60 * 60 * 24);
-          if (diff > 7 || diff < 0) return false;
+          dataInicioFiltro = new Date();
+          dataInicioFiltro.setDate(hoje.getDate() - 7);
+          dataFimFiltro = hoje;
         } else if (filtroPeriodo === "mes") {
-          if (dataRegistro.getMonth() !== mesAtual || dataRegistro.getFullYear() !== anoAtual) return false;
+          dataInicioFiltro = new Date(anoAtual, mesAtual, 1);
+          dataFimFiltro = new Date(anoAtual, mesAtual + 1, 0);
+        } else if (filtroPeriodo === "mesAnterior") {
+          dataInicioFiltro = new Date(anoAtual, mesAtual - 1, 1);
+          dataFimFiltro = new Date(anoAtual, mesAtual, 0);
         }
 
-        if (inicio && dataRegistro < new Date(inicio)) return false;
-        if (fim && dataRegistro > new Date(fim)) return false;
-        if (filtroTipo && tipo !== filtroTipo) return false;
-        if (filtroPagamento && pagamento !== filtroPagamento) return false;
-        if (filtroItem && !servico.includes(filtroItem)) return false;
-        if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return false;
+        // Se usuário preencher manualmente, isso substitui o filtro de período
+        const dataManualInicio = inputInicio ? new Date(inputInicio) : null;
+        const dataManualFim = inputFim ? new Date(inputFim) : null;
 
-        return true;
-      });
+        const { data, error } = await supabase.from('registros').select('*');
+        if (error) return alert("Erro: " + error.message);
 
-      // chama aqui suas funções de filtro, cálculo e desenho de gráficos
-      // como exemplo:
-      desenharGraficoPizza("grafico-por-tipo", "Valores por Tipo de Registro", agruparValores("tipo"));
-      desenharGraficoPizza("grafico-por-pagamento", "Valores por Forma de Pagamento", agruparValores("forma_pagamento"));
-      desenharGraficoColunaEmpilhada("grafico-por-data", "Totais por Mês", agruparTotaisMensais());
-      desenharGraficoPizza("grafico-por-item", "Totais por Item (Entradas)", agruparItensEntrada());
-      desenharGraficoColunaSimples("grafico-por-quantidade", "KG Lavados por Mês", agruparKGMensal());
-      desenharGraficoComparativo("grafico-comparativo", "Comparativo Mensal por Tipo", agruparComparativoMensal());
+        dadosBrutos = data.filter(row => {
+          const dataRegistro = new Date(row.data);
+          const tipo = row.tipo || "";
+          const pagamento = row.forma_pagamento || "";
+          const servico = row.itens || "";
+          const empresa = (row.nome_empresa || "").toLowerCase();
 
-      // Atualizar totalizadores
-      let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
-      dadosBrutos.forEach(row => {
-        const valor = parseFloat(row.valor_total || 0);
-        if (row.tipo === "entrada") totalEntrada += valor;
-        if (row.tipo === "despesa") totalDespesa += valor;
-        if (row.tipo === "nf") totalNF += valor;
-      });
-      document.getElementById("total-entrada").textContent = formatarNumero(totalEntrada);
-      document.getElementById("total-despesa").textContent = formatarNumero(totalDespesa);
-      document.getElementById("total-nf").textContent = formatarNumero(totalNF);
-      document.getElementById("total-saldo").textContent = formatarNumero(totalEntrada + totalNF - totalDespesa);
-    }
+          // Filtro por período (só aplica se não houver filtro manual)
+          if (!dataManualInicio && dataInicioFiltro && dataRegistro < dataInicioFiltro) return false;
+          if (!dataManualFim && dataFimFiltro && dataRegistro > dataFimFiltro) return false;
 
-    function agruparValores(chave) {
-      const resultado = {};
-      dadosBrutos.forEach(row => {
-        const valor = parseFloat(row.valor_total || 0);
-        const k = row[chave] || "Indefinido";
-        resultado[k] = (resultado[k] || 0) + valor;
-      });
-      return resultado;
-    }
+          // Filtro por data manual
+          if (dataManualInicio && dataRegistro < dataManualInicio) return false;
+          if (dataManualFim && dataRegistro > dataManualFim) return false;
 
-    function agruparTotaisMensais() {
-      const meses = {};
-      dadosBrutos.forEach(row => {
-        const tipo = row.tipo;
-        const valor = parseFloat(row.valor_total || 0);
-        const data = new Date(row.data);
-        const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
-        if (!meses[chave]) meses[chave] = { entrada: 0, despesa: 0, nf: 0 };
-        if (meses[chave][tipo] !== undefined) meses[chave][tipo] += valor;
-      });
-      return meses;
-    }
+          if (filtroTipo && tipo !== filtroTipo) return false;
+          if (filtroPagamento && pagamento !== filtroPagamento) return false;
+          if (filtroItem && !servico.includes(filtroItem)) return false;
+          if (filtroEmpresa && !empresa.includes(filtroEmpresa)) return false;
 
-    function agruparItensEntrada() {
-      const itens = {};
-      dadosBrutos.forEach(row => {
-        if (row.tipo !== "entrada") return;
-        const nomes = row.itens ? row.itens.replace(/[\[\]"]+/g, '').split(',') : [];
-        const valor = parseFloat(row.valor_total || 0);
-        nomes.forEach(item => {
-          itens[item.trim()] = (itens[item.trim()] || 0) + valor;
+          return true;
         });
-      });
-      return itens;
-    }
 
-    function agruparKGMensal() {
-      const kg = {};
-      dadosBrutos.forEach(row => {
-        if (row.tipo === "entrada" && row.itens.includes("KG")) {
+        // Continua com seus gráficos e totalizadores
+        desenharGraficoPizza("grafico-por-tipo", "Valores por Tipo de Registro", agruparValores("tipo"));
+        desenharGraficoPizza("grafico-por-pagamento", "Valores por Forma de Pagamento", agruparValores("forma_pagamento"));
+        desenharGraficoColunaEmpilhada("grafico-por-data", "Totais por Mês", agruparTotaisMensais());
+        desenharGraficoPizza("grafico-por-item", "Totais por Item (Entradas)", agruparItensEntrada());
+        desenharGraficoColunaSimples("grafico-por-quantidade", "KG Lavados por Mês", agruparKGMensal());
+        desenharGraficoComparativo("grafico-comparativo", "Comparativo Mensal por Tipo", agruparComparativoMensal());
+
+        // Totalizadores
+        let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
+        dadosBrutos.forEach(row => {
+          const valor = parseFloat(row.valor_total || 0);
+          if (row.tipo === "entrada") totalEntrada += valor;
+          if (row.tipo === "despesa") totalDespesa += valor;
+          if (row.tipo === "nf") totalNF += valor;
+        });
+        document.getElementById("total-entrada").textContent = formatarNumero(totalEntrada);
+        document.getElementById("total-despesa").textContent = formatarNumero(totalDespesa);
+        document.getElementById("total-nf").textContent = formatarNumero(totalNF);
+        document.getElementById("total-saldo").textContent = formatarNumero(totalEntrada + totalNF - totalDespesa);
+      }
+
+      // ⬇️ Cole aqui a função resetarFiltros
+      function resetarFiltros() {
+        document.getElementById("filtro-periodo").value = "todos";
+        document.getElementById("data-inicio").value = "";
+        document.getElementById("data-fim").value = "";
+        document.getElementById("filtro-tipo").value = "";
+        document.getElementById("filtro-pagamento").value = "";
+        document.getElementById("filtro-item").value = "";
+        document.getElementById("filtro-empresa").value = "";
+        carregarDados();
+      }
+
+      function agruparValores(chave) {
+        const resultado = {};
+        dadosBrutos.forEach(row => {
+          const valor = parseFloat(row.valor_total || 0);
+          const k = row[chave] || "Indefinido";
+          resultado[k] = (resultado[k] || 0) + valor;
+        });
+        return resultado;
+      }
+
+      function agruparTotaisMensais() {
+        const meses = {};
+        dadosBrutos.forEach(row => {
+          const tipo = row.tipo;
+          const valor = parseFloat(row.valor_total || 0);
           const data = new Date(row.data);
           const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
-          const peso = parseFloat(row.peso || 0);
-          kg[chave] = (kg[chave] || 0) + peso;
-        }
-      });
-      return kg;
-    }
-
-    function agruparComparativoMensal() {
-      const dados = agruparTotaisMensais();
-      const resultado = [["Mês", "Entradas", "Despesas", "NF"]];
-      Object.keys(dados).sort().forEach(mes => {
-        resultado.push([mes, dados[mes].entrada, dados[mes].despesa, dados[mes].nf]);
-      });
-      return resultado;
-    }
-
-    function desenharGraficoPizza(id, titulo, dadosObj) {
-      const dataArray = [["Categoria", "Valor"]];
-      for (const chave in dadosObj) {
-        dataArray.push([chave, dadosObj[chave]]);
+          if (!meses[chave]) meses[chave] = { entrada: 0, despesa: 0, nf: 0 };
+          if (meses[chave][tipo] !== undefined) meses[chave][tipo] += valor;
+        });
+        return meses;
       }
-      const data = google.visualization.arrayToDataTable(dataArray);
-      const chart = new google.visualization.PieChart(document.getElementById(id));
-      chart.draw(data, {
-        title: titulo,
-        pieHole: 0.4,
-        chartArea: { width: "90%", height: "80%" },
-        legend: legendaCentralizada()
-      });
-    }
 
-    function desenharGraficoColunaEmpilhada(id, titulo, dadosObj) {
-      const dataArray = [["Mês", "Entrada", "Despesa", "NF", { type: 'number', label: 'Lucro' }, { role: 'annotation' }]];
+      function agruparItensEntrada() {
+        const itens = {};
+        dadosBrutos.forEach(row => {
+          if (row.tipo !== "entrada") return;
+          const nomes = row.itens ? row.itens.replace(/[\[\]"]+/g, '').split(',') : [];
+          const valor = parseFloat(row.valor_total || 0);
+          nomes.forEach(item => {
+            itens[item.trim()] = (itens[item.trim()] || 0) + valor;
+          });
+        });
+        return itens;
+      }
 
-      let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
-
-      Object.keys(dadosObj).sort().forEach(mes => {
-        const d = dadosObj[mes];
-        const lucro = d.entrada + d.nf - d.despesa;
-        totalEntrada += d.entrada;
-        totalDespesa += d.despesa;
-        totalNF += d.nf;
-        dataArray.push([
-          mes,
-          d.entrada,
-          d.despesa,
-          d.nf,
-          lucro,
-          formatarNumero(lucro)
-        ]);
-      });
-
-      // Adiciona barra final com o total acumulado
-      const lucroTotal = totalEntrada + totalNF - totalDespesa;
-      dataArray.push([
-        "Acumulado",
-        totalEntrada,
-        totalDespesa,
-        totalNF,
-        lucroTotal,
-        formatarNumero(lucroTotal)
-      ]);
-
-      const data = google.visualization.arrayToDataTable(dataArray);
-
-      const chart = new google.visualization.ComboChart(document.getElementById(id));
-      chart.draw(data, {
-        title: titulo,
-        isStacked: true,
-        legend: { position: "top" },
-        chartArea: { width: "90%", height: "70%" },
-        annotations: { alwaysOutside: true },
-        seriesType: 'bars',
-        series: {
-          0: { color: '#4CAF50' }, // Entrada
-          1: { color: '#F44336' }, // Despesa
-          2: { color: '#2196F3' }, // NF
-          3: { type: 'line', color: '#000000', lineWidth: 2, pointSize: 6 } // Lucro
-        }
-      });
-    }
-
-    function desenharGraficoColunaSimples(id, titulo, dadosObj) {
-      const dataArray = [["Mês", "KG", { role: 'annotation' }]];
-      let acumulado = 0;
-
-      Object.keys(dadosObj).sort().forEach(mes => {
-        acumulado += dadosObj[mes];
-        dataArray.push([mes, dadosObj[mes], acumulado.toFixed(0) + " KG"]);
-      });
-
-      // Adiciona barra final com total acumulado
-      dataArray.push(["Acumulado", acumulado, acumulado.toFixed(0) + " KG"]);
-
-      const data = google.visualization.arrayToDataTable(dataArray);
-      const chart = new google.visualization.ColumnChart(document.getElementById(id));
-      chart.draw(data, {
-        title: titulo,
-        legend: { position: "none" },
-        chartArea: { width: "90%", height: "70%" },
-        annotations: { alwaysOutside: true }
-      });
-    }
-
-
-    function desenharGraficoComparativo(id, titulo, dadosArray) {
-      const acumulado = { entrada: 0, despesa: 0, nf: 0 };
-      const novosDados = [
-        ["Mês", "Entradas", { role: "annotation" }, "Despesas", { role: "annotation" }, "NF", { role: "annotation" }]
-      ];
-
-      const linhas = dadosArray.slice(1); // ignora cabeçalho original
-
-      linhas.forEach(([mes, entrada, despesa, nf]) => {
-        acumulado.entrada += entrada;
-        acumulado.despesa += despesa;
-        acumulado.nf += nf;
-
-        novosDados.push([
-          mes,
-          entrada, entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
-          despesa, despesa.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
-          nf, nf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
-        ]);
-      });
-
-      // Linha de acumulado
-      novosDados.push([
-        "Acumulado",
-        acumulado.entrada, acumulado.entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
-        acumulado.despesa, acumulado.despesa.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
-        acumulado.nf, acumulado.nf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
-      ]);
-
-      const data = google.visualization.arrayToDataTable(novosDados);
-      const chart = new google.visualization.ColumnChart(document.getElementById(id));
-
-      chart.draw(data, {
-        title: titulo,
-        legend: {
-          position: "top",
-          alignment: "center",
-          textStyle: { fontSize: 13 }
-        },
-        chartArea: {
-          left: 70,
-          top: 60,
-          width: "90%",
-          height: "65%"  // Reduz um pouco a altura da área dos gráficos para dar espaço para o eixo
-        },
-        height: 500, // Aumenta a altura total do gráfico
-        bar: {
-          groupWidth: "60%" // Ajuste visual para espaçamento entre colunas
-        },
-        annotations: {
-          alwaysOutside: true,
-          textStyle: {
-            fontSize: 12,
-            bold: true
+      function agruparKGMensal() {
+        const kg = {};
+        dadosBrutos.forEach(row => {
+          if (row.tipo === "entrada" && row.itens.includes("KG")) {
+            const data = new Date(row.data);
+            const chave = `${data.getFullYear()}-${String(data.getMonth() + 1).padStart(2, '0')}`;
+            const peso = parseFloat(row.peso || 0);
+            kg[chave] = (kg[chave] || 0) + peso;
           }
-        },
-        vAxis: {
-          textStyle: { fontSize: 12 },
-          format: "currency"
-        },
-        hAxis: {
-          slantedText: true,
-          slantedTextAngle: 30,
-          textStyle: { fontSize: 12 }
+        });
+        return kg;
+      }
+
+      function agruparComparativoMensal() {
+        const dados = agruparTotaisMensais();
+        const resultado = [["Mês", "Entradas", "Despesas", "NF"]];
+        Object.keys(dados).sort().forEach(mes => {
+          resultado.push([mes, dados[mes].entrada, dados[mes].despesa, dados[mes].nf]);
+        });
+        return resultado;
+      }
+
+      function desenharGraficoPizza(id, titulo, dadosObj) {
+        const dataArray = [["Categoria", "Valor"]];
+        for (const chave in dadosObj) {
+          dataArray.push([chave, dadosObj[chave]]);
         }
+        const data = google.visualization.arrayToDataTable(dataArray);
+        const chart = new google.visualization.PieChart(document.getElementById(id));
+        chart.draw(data, {
+          title: titulo,
+          pieHole: 0.4,
+          chartArea: { width: "90%", height: "80%" },
+          legend: legendaCentralizada()
+        });
+      }
+
+      function desenharGraficoColunaEmpilhada(id, titulo, dadosObj) {
+        const dataArray = [["Mês", "Entrada", "Despesa", "NF", { type: 'number', label: 'Lucro' }, { role: 'annotation' }]];
+
+        let totalEntrada = 0, totalDespesa = 0, totalNF = 0;
+
+        Object.keys(dadosObj).sort().forEach(mes => {
+          const d = dadosObj[mes];
+          const lucro = d.entrada + d.nf - d.despesa;
+          totalEntrada += d.entrada;
+          totalDespesa += d.despesa;
+          totalNF += d.nf;
+          dataArray.push([
+            mes,
+            d.entrada,
+            d.despesa,
+            d.nf,
+            lucro,
+            formatarNumero(lucro)
+          ]);
+        });
+
+        // Adiciona barra final com o total acumulado
+        const lucroTotal = totalEntrada + totalNF - totalDespesa;
+        dataArray.push([
+          "Acumulado",
+          totalEntrada,
+          totalDespesa,
+          totalNF,
+          lucroTotal,
+          formatarNumero(lucroTotal)
+        ]);
+
+        const data = google.visualization.arrayToDataTable(dataArray);
+
+        const chart = new google.visualization.ComboChart(document.getElementById(id));
+        chart.draw(data, {
+          title: titulo,
+          isStacked: true,
+          legend: { position: "top" },
+          chartArea: { width: "90%", height: "70%" },
+          annotations: { alwaysOutside: true },
+          seriesType: 'bars',
+          series: {
+            0: { color: '#4CAF50' }, // Entrada
+            1: { color: '#F44336' }, // Despesa
+            2: { color: '#2196F3' }, // NF
+            3: { type: 'line', color: '#000000', lineWidth: 2, pointSize: 6 } // Lucro
+          }
+        });
+      }
+
+      function desenharGraficoColunaSimples(id, titulo, dadosObj) {
+        const dataArray = [["Mês", "KG", { role: 'annotation' }]];
+        let acumulado = 0;
+
+        Object.keys(dadosObj).sort().forEach(mes => {
+          acumulado += dadosObj[mes];
+          dataArray.push([mes, dadosObj[mes], acumulado.toFixed(0) + " KG"]);
+        });
+
+        // Adiciona barra final com total acumulado
+        dataArray.push(["Acumulado", acumulado, acumulado.toFixed(0) + " KG"]);
+
+        const data = google.visualization.arrayToDataTable(dataArray);
+        const chart = new google.visualization.ColumnChart(document.getElementById(id));
+        chart.draw(data, {
+          title: titulo,
+          legend: { position: "none" },
+          chartArea: { width: "90%", height: "70%" },
+          annotations: { alwaysOutside: true }
+        });
+      }
+
+
+      function desenharGraficoComparativo(id, titulo, dadosArray) {
+        const acumulado = { entrada: 0, despesa: 0, nf: 0 };
+        const novosDados = [
+          ["Mês", "Entradas", { role: "annotation" }, "Despesas", { role: "annotation" }, "NF", { role: "annotation" }]
+        ];
+
+        const linhas = dadosArray.slice(1); // ignora cabeçalho original
+
+        linhas.forEach(([mes, entrada, despesa, nf]) => {
+          acumulado.entrada += entrada;
+          acumulado.despesa += despesa;
+          acumulado.nf += nf;
+
+          novosDados.push([
+            mes,
+            entrada, entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+            despesa, despesa.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+            nf, nf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+          ]);
+        });
+
+        // Linha de acumulado
+        novosDados.push([
+          "Acumulado",
+          acumulado.entrada, acumulado.entrada.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+          acumulado.despesa, acumulado.despesa.toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+          acumulado.nf, acumulado.nf.toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+        ]);
+
+        const data = google.visualization.arrayToDataTable(novosDados);
+        const chart = new google.visualization.ColumnChart(document.getElementById(id));
+
+        chart.draw(data, {
+          title: titulo,
+          legend: {
+            position: "top",
+            alignment: "center",
+            textStyle: { fontSize: 13 }
+          },
+          chartArea: {
+            left: 70,
+            top: 60,
+            width: "90%",
+            height: "65%"  // Reduz um pouco a altura da área dos gráficos para dar espaço para o eixo
+          },
+          height: 500, // Aumenta a altura total do gráfico
+          bar: {
+            groupWidth: "60%" // Ajuste visual para espaçamento entre colunas
+          },
+          annotations: {
+            alwaysOutside: true,
+            textStyle: {
+              fontSize: 12,
+              bold: true
+            }
+          },
+          vAxis: {
+            textStyle: { fontSize: 12 },
+            format: "currency"
+          },
+          hAxis: {
+            slantedText: true,
+            slantedTextAngle: 30,
+            textStyle: { fontSize: 12 }
+          }
+        });
+
+      }
+
+      google.charts.load('current', { packages: ['corechart'] });
+      google.charts.setOnLoadCallback(() => {
+        carregarDados();
+        preencherEmpresas();
       });
 
-    }
+      window.carregarDados = carregarDados;
+      window.resetarFiltros = resetarFiltros;
+      // Preencher filtro de empresa automaticamente
+      async function preencherEmpresas() {
+        const { data, error } = await supabase.from('registros').select('nome_empresa');
+        if (error) {
+          console.error("Erro ao carregar empresas:", error);
+          return;
+        }
 
+        const selectEmpresa = document.getElementById("filtro-empresa");
+        const empresasUnicas = new Set();
 
+        data.forEach(row => {
+          const nome = row.nome_empresa?.trim();
+          if (nome) empresasUnicas.add(nome);
+        });
 
-    google.charts.load('current', { packages: ['corechart'] });
-    google.charts.setOnLoadCallback(carregarDados);
-    window.carregarDados = carregarDados;
-  </script>
+        // Limpa e adiciona a opção padrão
+        selectEmpresa.innerHTML = '<option value="">Todas</option>';
 
-  <footer class="rodape">
-    <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
-  </footer>
-  <script>
-    document.getElementById("ano-atual").textContent = new Date().getFullYear();
-  </script>
+        [...empresasUnicas].sort().forEach(empresa => {
+          const option = document.createElement("option");
+          option.value = empresa;
+          option.textContent = empresa;
+          selectEmpresa.appendChild(option);
+        });
+      }
+    </script>
+
+    <footer class="rodape">
+      <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
+    </footer>
+    <script>
+      document.getElementById("ano-atual").textContent = new Date().getFullYear();
+    </script>
 </body>
 
 </html>

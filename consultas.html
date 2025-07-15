@@ -8,7 +8,9 @@
 </head>
 
 <body>
-  <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  <a href="index.html">
+    <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  </a>
   <div class="container">
     <h1>Consultas e Registros</h1>
     <p class="titulo-print" style="display: none;">Lavanderia AcquaClean - Relatório de Registros</p>
@@ -340,8 +342,6 @@
     window.addEventListener("DOMContentLoaded", () => {
       preencherFiltroEmpresa();
     });
-
-
 
     function limparFiltros() {
       document.getElementById("filtro-periodo").value = "todos";

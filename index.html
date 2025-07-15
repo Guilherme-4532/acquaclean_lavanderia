@@ -32,7 +32,7 @@
       position: absolute;
       top: 20px;
       left: 20px;
-      width: 60px;
+      width: 90px;
     }
 
     .grid {
@@ -84,22 +84,27 @@
   <div class="container">
     <h1>Bem-vindo ao Sistema AcquaClean</h1>
 
-    <div class="grid">
+    <div class="botoes-grid">
+      <!-- Coluna da esquerda -->
       <div class="coluna">
         <a href="entradas.html" class="btn">💰 Entradas de Comandas</a>
         <a href="despesas.html" class="btn">📉 Lançar Despesas</a>
         <a href="nf_emitidas.html" class="btn">📄 Emitir NF</a>
+        <a href="pagamento.html" class="btn">💳 Pagamento</a>
       </div>
 
+      <!-- Coluna da direita -->
       <div class="coluna">
         <a href="consultas.html" class="btn">📋 Consultar Registros</a>
         <a href="dashboard.html" class="btn">📊 Dashboard e Gráficos</a>
       </div>
     </div>
   </div>
+
   <footer class="rodape">
     <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
   </footer>
+
   <script>
     document.getElementById("ano-atual").textContent = new Date().getFullYear();
   </script>
