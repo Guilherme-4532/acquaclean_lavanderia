@@ -81,15 +81,32 @@
             const comanda = document.getElementById("numero-comanda").value.trim();
             const novaForma = document.getElementById("forma-pagamento").value;
 
+            // 🔍 Buscar registro completo
+            const { data: busca, error: erroBusca } = await supabase
+                .from("registros")
+                .select("id, forma_pagamento")
+                .eq("numero_comanda", comanda);
+
+            if (erroBusca) {
+                alert("Erro ao localizar comanda: " + erroBusca.message);
+                return;
+            }
+
+            if (!busca || busca.length === 0) {
+                alert("Comanda não encontrada no Supabase.");
+                return;
+            }
+
+            const idRegistro = busca[0].id;
+
+            // 🔄 Atualizar usando o ID
             const { data, error } = await supabase
                 .from("registros")
                 .update({ forma_pagamento: novaForma })
-                .eq("numero_comanda", comanda);
+                .eq("id", idRegistro);
 
             if (error) {
                 alert("Erro ao atualizar pagamento: " + error.message);
-            } else if (!data || data.length === 0) {
-                alert("Comanda não encontrada.");
             } else {
                 alert("Pagamento atualizado com sucesso!");
                 e.target.reset();
@@ -102,4 +119,3 @@
 </body>
 
 </html>
-````
