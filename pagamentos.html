@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Pagamentos - Confirmação</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a href="index.html">
+    <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  </a>
+
+  <div class="container">
+    <h1>Confirmação de Pagamento</h1>
+    <form id="form-pagamento" class="form-box">
+      <label for="data-operacao">Data da operação:
+        <input type="date" id="data-operacao" required>
+      </label>
+
+      <label for="numero-comanda">Número da comanda:
+        <input type="text" id="numero-comanda" placeholder="Ex: 4578" required>
+      </label>
+
+      <label for="forma-pagamento">Forma de pagamento:
+        <select id="forma-pagamento" required>
+          <option value="">Selecione</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão">Cartão</option>
+          <option value="Boleto">Boleto</option>
+          <option value="PIX">PIX</option>
+        </select>
+      </label>
+
+      <button type="submit" class="btn-submit">Confirmar pagamento</button>
+    </form>
+
+    <div class="voltar-container">
+      <a href="index.html" class="btn-voltar">← Voltar ao Menu Principal</a>
+    </div>
+  </div>
+
+  <footer class="rodape">
+    <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
+  </footer>
+
+  <script type="module">
+  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+  const supabaseUrl = 'https://vqfohtlpdhkzcnyupofk.supabase.co';
+  const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE';
+  const supabase = createClient(supabaseUrl, supabaseKey);
+
+  document.getElementById("form-pagamento").addEventListener("submit", async function (e) {
+    e.preventDefault();
+
+    const comanda = document.getElementById("numero-comanda").value.trim();
+    const novaForma = document.getElementById("forma-pagamento").value;
+
+    const { data, error } = await supabase
+      .from("registros")
+      .update({ forma_pagamento: novaForma })
+      .eq("numero_comanda", comanda);
+
+    if (error) {
+      alert("Erro ao atualizar pagamento: " + error.message);
+    } else if (data.length === 0) {
+      alert("Comanda não encontrada.");
+    } else {
+      alert("Pagamento atualizado com sucesso!");
+      e.target.reset();
+    }
+  });
+
+  // Atualiza o ano no rodapé
+  document.getElementById("ano-atual").textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
