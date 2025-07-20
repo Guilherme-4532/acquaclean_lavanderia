@@ -20,7 +20,9 @@
             </label>
 
             <label for="numero-comanda">Número da comanda:
-                <input type="text" id="numero-comanda" placeholder="Ex: 4578" required>
+                <select id="numero-comanda" required>
+                    <option value="">Selecione</option>
+                </select>
             </label>
 
             <label for="forma-pagamento">Forma de pagamento:
@@ -49,8 +51,29 @@
         import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
         const supabaseUrl = 'https://vqfohtlpdhkzcnyupofk.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE';
+        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE'; // Insira sua chave anon aqui
         const supabase = createClient(supabaseUrl, supabaseKey);
+
+        async function carregarComandas() {
+            const { data, error } = await supabase
+                .from("registros")
+                .select("numero_comanda");
+
+            if (error) {
+                console.error("Erro ao carregar comandas:", error.message);
+                return;
+            }
+
+            const selectComanda = document.getElementById("numero-comanda");
+            data.forEach(registro => {
+                const option = document.createElement("option");
+                option.value = registro.numero_comanda;
+                option.textContent = registro.numero_comanda;
+                selectComanda.appendChild(option);
+            });
+        }
+
+        document.addEventListener("DOMContentLoaded", carregarComandas);
 
         document.getElementById("form-pagamento").addEventListener("submit", async function (e) {
             e.preventDefault();
@@ -79,3 +102,4 @@
 </body>
 
 </html>
+````
