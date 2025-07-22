@@ -18,6 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
       const data = document.getElementById("data").value;
       const comanda = document.getElementById("comanda").value;
       const pagamento = document.getElementById("pagamento").value;
+      const nomeCliente = document.getElementById("nome-cliente").value.trim();
+      const telefoneCliente = document.getElementById("telefone-cliente").value.trim();
       const itensDOM = document.querySelectorAll(".card-item");
 
       if (itensDOM.length === 0) {
@@ -60,6 +62,8 @@ document.addEventListener("DOMContentLoaded", function () {
         data: data,
         numero_comanda: comanda,
         forma_pagamento: pagamento,
+        nome_cliente: nomeCliente,
+        telefone_cliente: telefoneCliente,
         itens,
         quantidades,
         valores,

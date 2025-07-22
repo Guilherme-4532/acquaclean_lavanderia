@@ -39,6 +39,14 @@
       <label for="data-fim">Até:
         <input type="date" id="data-fim">
       </label>
+
+      <label for="filtro-nome">Nome do Cliente:
+        <input type="text" id="filtro-nome" placeholder="Digite o nome">
+      </label>
+
+      <label for="filtro-telefone">Telefone do Cliente:
+        <input type="tel" id="filtro-telefone" placeholder="(99) 99999-9999">
+      </label>
     </div>
 
     <!-- Filtros linha 2 -->
@@ -147,6 +155,9 @@
       const filtroPagamento = document.getElementById("filtro-pagamento").value;
       const filtroItem = document.getElementById("filtro-item").value;
       const filtroEmpresa = document.getElementById("filtro-empresa").value;
+      const filtroNome = document.getElementById("filtro-nome").value.trim().toLowerCase();
+      const filtroTelefone = document.getElementById("filtro-telefone").value.trim();
+
 
       const hoje = new Date();
       const mesAtual = hoje.getMonth();
@@ -250,6 +261,8 @@
         if (filtroPagamento && pagamento !== filtroPagamento) return;
         if (filtroItem && !itensArray.includes(filtroItem)) return;
         if (filtroEmpresa && row.nome_empresa !== filtroEmpresa) return;
+        if (filtroNome && !(row.nome_cliente || "").toLowerCase().includes(filtroNome)) return;
+        if (filtroTelefone && !(row.telefone_cliente || "").includes(filtroTelefone)) return;
 
 
         totalValor += valor;
@@ -351,6 +364,8 @@
       document.getElementById("filtro-pagamento").value = "";
       document.getElementById("filtro-item").value = "";
       document.getElementById("filtro-empresa").value = "";
+      document.getElementById("filtro-nome").value = "";
+      document.getElementById("filtro-telefone").value = "";
       carregarDados();
     }
 
