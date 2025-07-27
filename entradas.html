@@ -5,6 +5,14 @@
   <meta charset="UTF-8">
   <title>Gestão Financeira - Entradas</title>
   <link rel="stylesheet" href="css/style.css">
+
+  <!-- 🔐 Verificação de login -->
+  <script type="module">
+    const logado = localStorage.getItem("usuarioLogado");
+    if (!logado) {
+      window.location.href = "login.html"; // redireciona se não estiver logado
+    }
+  </script>
   <style>
     body {
       font-family: "Segoe UI", sans-serif;

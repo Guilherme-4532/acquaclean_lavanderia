@@ -6,6 +6,14 @@
   <title>Dashboard AcquaClean</title>
   <link rel="stylesheet" href="css/style.css">
   <script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+
+  <!-- 🔐 Verificação de login -->
+  <script type="module">
+    const logado = localStorage.getItem("usuarioLogado");
+    if (!logado) {
+      window.location.href = "login.html"; // redireciona se não estiver logado
+    }
+  </script>
 </head>
 
 <body>

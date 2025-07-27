@@ -5,6 +5,14 @@
   <meta charset="UTF-8">
   <title>Consultas e Registros</title>
   <link rel="stylesheet" href="css/style.css">
+  
+  <!-- 🔐 Verificação de login -->
+  <script type="module">
+    const logado = localStorage.getItem("usuarioLogado");
+    if (!logado) {
+      window.location.href = "login.html"; // redireciona se não estiver logado
+    }
+  </script>
 </head>
 
 <body>

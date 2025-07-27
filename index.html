@@ -7,6 +7,14 @@
   <link rel="stylesheet" href="css/style.css">
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&family=Roboto&display=swap" rel="stylesheet">
 
+  <!-- 🔐 Verificação de login -->
+  <script type="module">
+    const logado = localStorage.getItem("usuarioLogado");
+    if (!logado) {
+      window.location.href = "login.html"; // redireciona se não estiver logado
+    }
+  </script>
+
 </head>
 
 <body>
