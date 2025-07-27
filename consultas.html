@@ -67,6 +67,7 @@
           <option value="Cartão">Cartão</option>
           <option value="Boleto">Boleto</option>
           <option value="PIX">PIX</option>
+          <option value="Retirada">Pagar na retirada</option>
         </select>
       </label>
 
@@ -269,12 +270,14 @@
 
         const tr = document.createElement("tr");
 
-        if (tipo === "despesa") {
+        if (row.forma_pagamento === "Retirada") {
+          tr.style.color = "#e67e22"; // cor do texto
+          tr.style.fontWeight = "bold";
+        } else if (tipo === "despesa") {
           tr.style.color = "#c0392b"; // vermelho escuro
         } else if (tipo === "entrada" || tipo === "nf") {
           tr.style.color = "#27ae60"; // verde forte
         }
-
 
         if (!filtroTipo) {
           tr.innerHTML = `

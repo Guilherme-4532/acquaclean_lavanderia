@@ -1,121 +1,122 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
-
 <head>
-    <meta charset="UTF-8">
-    <title>Pagamentos - Confirmação</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8">
+  <title>Pagamentos - Confirmação</title>
+  <link rel="stylesheet" href="css/style.css">
 </head>
-
 <body>
-    <a href="index.html">
-        <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
-    </a>
+  <a href="index.html">
+    <img src="img/logo.png" alt="Logo AcquaClean" class="logo-canto">
+  </a>
 
-    <div class="container">
-        <h1>Confirmação de Pagamento</h1>
-        <form id="form-pagamento" class="form-box">
-            <label for="data-operacao">Data da operação:
-                <input type="date" id="data-operacao" required>
-            </label>
+  <div class="container">
+    <h1>Confirmação de Pagamento</h1>
+    <form id="form-pagamento" class="form-box">
+      <label for="data-operacao">Data da operação:
+        <input type="date" id="data-operacao" required>
+      </label>
 
-            <label for="numero-comanda">Número da comanda:
-                <select id="numero-comanda" required>
-                    <option value="">Selecione</option>
-                </select>
-            </label>
+      <label for="numero-comanda">Número da comanda:
+        <select id="numero-comanda" required>
+          <option value="">Selecione</option>
+        </select>
+      </label>
 
-            <label for="forma-pagamento">Forma de pagamento:
-                <select id="forma-pagamento" required>
-                    <option value="">Selecione</option>
-                    <option value="Dinheiro">Dinheiro</option>
-                    <option value="Cartão">Cartão</option>
-                    <option value="Boleto">Boleto</option>
-                    <option value="PIX">PIX</option>
-                </select>
-            </label>
+      <label for="forma-pagamento">Forma de pagamento:
+        <select id="forma-pagamento" required>
+          <option value="">Selecione</option>
+          <option value="Dinheiro">Dinheiro</option>
+          <option value="Cartão">Cartão</option>
+          <option value="Boleto">Boleto</option>
+          <option value="PIX">PIX</option>
+        </select>
+      </label>
 
-            <button type="submit" class="btn-submit">Confirmar pagamento</button>
-        </form>
+      <button type="submit" class="btn-submit">Confirmar pagamento</button>
+    </form>
 
-        <div class="voltar-container">
-            <a href="index.html" class="btn-voltar">← Voltar ao Menu Principal</a>
-        </div>
+    <div class="voltar-container">
+      <a href="index.html" class="btn-voltar">← Voltar ao Menu Principal</a>
     </div>
+  </div>
 
-    <footer class="rodape">
-        <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
-    </footer>
+  <footer class="rodape">
+    <p>&copy; <span id="ano-atual"></span> Lavanderia AcquaClean. Todos os direitos reservados.</p>
+  </footer>
 
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
 
-        const supabaseUrl = 'https://vqfohtlpdhkzcnyupofk.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE'; // Insira sua chave anon aqui
-        const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseUrl = 'https://vqfohtlpdhkzcnyupofk.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZxZm9odGxwZGhremNueXVwb2ZrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA0NTQ4NDcsImV4cCI6MjA2NjAzMDg0N30.XwRRSSHKdRAq6Dh--8lC3V8jcBJLsz21G9vV-IDz6hE'; // Insira sua chave anon aqui
+    const supabase = createClient(supabaseUrl, supabaseKey);
 
-        async function carregarComandas() {
-            const { data, error } = await supabase
-                .from("registros")
-                .select("numero_comanda");
+    async function carregarComandas() {
+      const { data, error } = await supabase
+        .from("registros")
+        .select("numero_comanda");
 
-            if (error) {
-                console.error("Erro ao carregar comandas:", error.message);
-                return;
-            }
+      if (error) {
+        console.error("Erro ao carregar comandas:", error.message);
+        return;
+      }
 
-            const selectComanda = document.getElementById("numero-comanda");
-            data.forEach(registro => {
-                const option = document.createElement("option");
-                option.value = registro.numero_comanda;
-                option.textContent = registro.numero_comanda;
-                selectComanda.appendChild(option);
-            });
+      console.log("Comandas carregadas:", data); // ✅ Diagnóstico
+
+      const selectComanda = document.getElementById("numero-comanda");
+      data.forEach(registro => {
+        if (registro.numero_comanda) {
+          const option = document.createElement("option");
+          option.value = registro.numero_comanda;
+          option.textContent = registro.numero_comanda;
+          selectComanda.appendChild(option);
         }
+      });
+    }
 
-        document.addEventListener("DOMContentLoaded", carregarComandas);
+    document.addEventListener("DOMContentLoaded", carregarComandas);
 
-        document.getElementById("form-pagamento").addEventListener("submit", async function (e) {
-            e.preventDefault();
+    document.getElementById("form-pagamento").addEventListener("submit", async function (e) {
+      e.preventDefault();
 
-            const comanda = document.getElementById("numero-comanda").value.trim();
-            const novaForma = document.getElementById("forma-pagamento").value;
+      const comanda = document.getElementById("numero-comanda").value.trim();
+      const novaForma = document.getElementById("forma-pagamento").value;
 
-            // 🔍 Buscar registro completo
-            const { data: busca, error: erroBusca } = await supabase
-                .from("registros")
-                .select("id, forma_pagamento")
-                .eq("numero_comanda", comanda);
+      // 🔍 Buscar registro completo
+      const { data: busca, error: erroBusca } = await supabase
+        .from("registros")
+        .select("id, forma_pagamento")
+        .eq("numero_comanda", comanda);
 
-            if (erroBusca) {
-                alert("Erro ao localizar comanda: " + erroBusca.message);
-                return;
-            }
+      if (erroBusca) {
+        alert("Erro ao localizar comanda: " + erroBusca.message);
+        return;
+      }
 
-            if (!busca || busca.length === 0) {
-                alert("Comanda não encontrada no Supabase.");
-                return;
-            }
+      if (!busca || busca.length === 0) {
+        alert("Comanda não encontrada no Supabase.");
+        return;
+      }
 
-            const idRegistro = busca[0].id;
+      const idRegistro = busca[0].id;
 
-            // 🔄 Atualizar usando o ID
-            const { data, error } = await supabase
-                .from("registros")
-                .update({ forma_pagamento: novaForma })
-                .eq("id", idRegistro);
+      // 🔄 Atualizar usando o ID
+      const { data, error } = await supabase
+        .from("registros")
+        .update({ forma_pagamento: novaForma })
+        .eq("id", idRegistro);
 
-            if (error) {
-                alert("Erro ao atualizar pagamento: " + error.message);
-            } else {
-                alert("Pagamento atualizado com sucesso!");
-                e.target.reset();
-            }
-        });
+      if (error) {
+        alert("Erro ao atualizar pagamento: " + error.message);
+      } else {
+        alert("Pagamento atualizado com sucesso!");
+        e.target.reset();
+      }
+    });
 
-        // Atualiza o ano no rodapé
-        document.getElementById("ano-atual").textContent = new Date().getFullYear();
-    </script>
+    // Atualiza o ano no rodapé
+    document.getElementById("ano-atual").textContent = new Date().getFullYear();
+  </script>
 </body>
-
 </html>
